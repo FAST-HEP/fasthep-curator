@@ -27,7 +27,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+  "pyyaml",
+]
 
 [project.optional-dependencies]
 test = [
