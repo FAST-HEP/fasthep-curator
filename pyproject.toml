@@ -29,6 +29,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
   "pyyaml",
+  "uproot<6",
 ]
 
 [project.optional-dependencies]
