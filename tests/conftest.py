@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import pytest
 
 
@@ -58,3 +61,36 @@ def empty_yaml_config(tmpdir):
     tmpfile = tmpdir / "empty_yaml_config.yml"
     tmpfile.write(content)
     return str(tmpfile)
+
+
+@pytest.fixture(params=["relpath", "abspath"])
+def dummy_file_dir(request) -> Path:
+    relpath = request.param == "relpath"
+    cwd = Path.cwd()
+    data_path = Path(__file__).parent / "data"
+    directory = data_path
+    if relpath:
+        common_path = Path(os.path.commonprefix([cwd, data_path]))
+        directory = data_path.relative_to(common_path)
+    assert directory.is_dir()
+    return directory
+
+
+@pytest.fixture
+def dummy_file_100(dummy_file_dir):
+    return dummy_file_dir / "events_100.root"
+
+
+@pytest.fixture
+def dummy_file_202(dummy_file_dir):
+    return dummy_file_dir / "events_202.root"
+
+
+@pytest.fixture
+def dummy_file_empty(dummy_file_dir):
+    return dummy_file_dir / "empty.root"
+
+
+@pytest.fixture
+def dummy_file_no_tree(dummy_file_dir):
+    return dummy_file_dir / "no-tree.root"

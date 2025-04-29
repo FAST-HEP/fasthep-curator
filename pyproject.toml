@@ -36,6 +36,7 @@ dependencies = [
 test = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-lazy-fixtures < 2",
 ]
 dev = [
   "pytest >=6",
