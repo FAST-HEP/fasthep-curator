@@ -32,16 +32,18 @@
 
 > [!NOTE]
 >
-> `fasthep-curator` is still in early development, which means it is
-> incomplete and the API is not yet stable. Please report any issues you find on
-> the
-> [GitHub issue tracker](https://github.com/FAST-HEP/fasthep-curator/issues).
+> `fasthep-curator` is a port of
+> [fast-curator](https://github.com/FAST-HEP/fast-curator) to modern Python and
+> `uproot` versions as well as type hint support. It is not a drop-in
+> replacement, but it is designed to be compatible with the original
+> `fast-curator` API. Should you have any questions or issues, please
+> [open an issue](https://github.com/FAST-HEP/fasthep-curator/issues).
 
 **fasthep-curator** is a Python package that provides a set of components for
 building data processing pipelines. It is designed to work with the
 **fasthep-flow** library, which provides a framework for declaring and creating
-data processing workflows. Historically, **fasthep-curator** was limited to
-ROOT Trees as input and Pandas DataFrames as output. However, it has now been
+data processing workflows. Historically, **fasthep-curator** was limited to ROOT
+Trees as input and Pandas DataFrames as output. However, it has now been
 extended to support many data formats.
 
 ## Documentation
@@ -50,9 +52,8 @@ his project is in early development. The documentation is available at
 [fasthep-curator.readthedocs.io](https://fasthep-curator.readthedocs.io/en/latest/)
 and contains mostly fictional features. The most useful information can be found
 in the [FAST-HEP documentation](https://fast-hep.github.io/). It describes the
-current status and plans for the FAST-HEP projects, including
-`fasthep-curator` (see
-[Developer's Corner](https://fast-hep.github.io/developers-corner/)).
+current status and plans for the FAST-HEP projects, including `fasthep-curator`
+(see [Developer's Corner](https://fast-hep.github.io/developers-corner/)).
 
 ## Installation
 
@@ -67,9 +68,8 @@ pip install fasthep-curator[io-root, io-parquet, workflow-extras, plotting]
 You had a look and are interested to contribute? That's great! There are three
 main ways to contribute to this project:
 
-1. Head to the
-   [issues tab](https://github.com/FAST-HEP/fasthep-curator/issues) and see if
-   there is anything you can help with.
+1. Head to the [issues tab](https://github.com/FAST-HEP/fasthep-curator/issues)
+   and see if there is anything you can help with.
 2. If you have a new feature in mind,
    [please open an issue](https://github.com/FAST-HEP/fasthep-curator/issues/new)
    first to discuss it. This way we can ensure that your work is not in vain.
@@ -118,9 +118,9 @@ Special thanks to the gracious help of FAST-HEP contributors:
 
 This software is a continuation of the work done in the
 [fasthep-curator](https://github.com/FAST-HEP/fasthep-curator/tree/kreczko-1.0.0a1)
-and [fast-curator](https://github.com/FAST-HEP/fast-curator) repositories.
-The original code was developed by [Ben Krikler](https://github.com/benkrikler)
-and has been adapted and improved by
+and [fast-curator](https://github.com/FAST-HEP/fast-curator) repositories. The
+original code was developed by [Ben Krikler](https://github.com/benkrikler) and
+has been adapted and improved by
 [various collaborators](https://github.com/FAST-HEP/fast-curator/graphs/contributors).
 The new version of the software is designed to be more flexible and extensible,
 allowing users to easily create custom data processing pipelines.
