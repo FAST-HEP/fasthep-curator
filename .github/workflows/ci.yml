@@ -26,7 +26,7 @@ jobs:
         with:
           environment-name: test-env
           create-args: >-
-            python=3.12 xrootd
+            python=3.12 xrootd pipx
           init-shell: >-
             bash
           cache-environment: true
