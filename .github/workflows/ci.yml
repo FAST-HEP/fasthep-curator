@@ -14,6 +14,10 @@ concurrency:
 env:
   FORCE_COLOR: 3
 
+defaults:
+  run:
+    shell: bash -exo pipefail {0}
+
 jobs:
   pre-commit:
     name: Format
