@@ -30,7 +30,7 @@ jobs:
         with:
           environment-name: test-env
           create-args: >-
-            python=3.12 xrootd pipx
+            python=3.12 xrootd pipx uv
           init-shell: >-
             bash
           cache-environment: true
@@ -38,13 +38,14 @@ jobs:
       - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --hook-stage manual --all-files
-      - uses: wntrblm/nox@2025.02.09
-        with:
-          python-versions: "3.12"
+      - name: Install uv venv
+        run: |
+          uv venv
+          uv pip install "pylint>=3.2" .[test]
       - name: Run PyLint
         run: |
           echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
-          pipx run nox -s pylint
+          uv run pylint fasthep_curator
 
   checks:
     name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
@@ -64,18 +65,20 @@ jobs:
         with:
           environment-name: test-env
           create-args: >-
-            python=${{ matrix.python-version }} xrootd
+            python=${{ matrix.python-version }} xrootd uv
           init-shell: >-
             bash
           cache-environment: true
           post-cleanup: "all"
 
       - name: Install package
-        run: python -m pip install .[test]
+        run: |
+          uv venv
+          uv pip install .[test]
 
       - name: Test package
         run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term
+          uv run pytest -ra --cov --cov-report=xml --cov-report=term
           --durations=20
 
       - name: Upload coverage report
