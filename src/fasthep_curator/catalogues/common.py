@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import glob as local_glob
 import operator
 import os
+from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from functools import partial, reduce
 from pathlib import Path
@@ -9,31 +11,37 @@ from typing import Any, Callable
 from urllib.parse import urlparse
 
 import uproot
+from loguru import logger
 
 from fasthep_curator.read import Prefix
 
+try:
+    from XRootD.client.glob_funcs import glob as xrd_glob
+except ImportError:
+    xrd_glob = None
+    logger.warning(
+        "XRootD client library not found. XRootD file list expansion will not be available."
+    )
 
-class Expander:
+
+class Expander(ABC):
     """
     Base class for file list expanders
     """
 
     @staticmethod
-    def check_setup() -> bool:
-        msg = "check_setup not implemented"
-        raise NotImplementedError(msg)
+    @abstractmethod
+    def check_setup() -> bool: ...
 
     @staticmethod
-    def expand_file_list(files: list[str], prefix: Prefix = None) -> list[str]:
-        msg = "expand_file_list not implemented"
-        raise NotImplementedError(msg)
+    @abstractmethod
+    def expand_file_list(files: list[str], prefix: Prefix = None) -> list[str]: ...
 
     @staticmethod
+    @abstractmethod
     def check_files(
         *args: list[Any], **kwargs: dict[str, Any]
-    ) -> tuple[list[str], dict[str, int] | int, dict[str, Any]]:
-        msg = "check_files not implemented"
-        raise NotImplementedError(msg)
+    ) -> tuple[list[str], dict[str, int] | int, dict[str, Any]]: ...
 
 
 class XrootdExpander(Expander):
@@ -47,10 +55,11 @@ class XrootdExpander(Expander):
 
     @staticmethod
     def expand_file_list(files: list[str], prefix: Prefix = None) -> list[str]:
-        from XRootD.client.glob_funcs import glob
-
+        if xrd_glob is None:
+            msg = "XRootD client library not found. XRootD file list expansion will not be available."
+            raise RuntimeError(msg)
         return expand_file_list_generic(
-            files, prefix, glob=partial(glob, raise_error=True)
+            files, prefix, glob=partial(xrd_glob, raise_error=True)
         )
 
     @staticmethod
@@ -65,7 +74,7 @@ class LocalGlobExpander(Expander):
     Expand wild-carded file paths on the local file system
     """
 
-    import glob
+    glob = local_glob.glob
 
     @staticmethod
     def check_setup() -> bool:
@@ -73,8 +82,7 @@ class LocalGlobExpander(Expander):
 
     @staticmethod
     def expand_file_list(files: list[str], prefix: Prefix = None) -> list[str]:
-        glob = LocalGlobExpander.glob.glob
-        return expand_file_list_generic(files, prefix, glob=glob)
+        return expand_file_list_generic(files, prefix, glob=LocalGlobExpander.glob)
 
     @staticmethod
     def check_files(
