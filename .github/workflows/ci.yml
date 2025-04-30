@@ -42,6 +42,7 @@ jobs:
         run: |
           uv venv
           uv pip install "pylint>=3.2" .[test]
+        shell: bash -exo pipefail {0}
       - name: Run PyLint
         run: |
           echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
