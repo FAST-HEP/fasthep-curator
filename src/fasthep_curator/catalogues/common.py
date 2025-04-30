@@ -96,19 +96,30 @@ def expand_file_list_generic(
 ) -> list[str]:
     full_list: list[str] = []
     for name in files:
-        scheme = urlparse(name).scheme
-        path = name
-        if not scheme and not Path(name).is_absolute():
-            path = str(Path(str(prefix)) / name) if prefix else os.path.relpath(name)
+        path = str(name)
+        scheme = urlparse(path).scheme
+        if not scheme and not Path(path).is_absolute():
+            path = str(Path(str(prefix)) / path) if prefix else os.path.relpath(path)
         expanded = glob(path)
         full_list += map(str, expanded)
     return full_list
 
 
+def _tree_exists(file: str, tree_name: str) -> bool:
+    with uproot.open(file) as f:
+        if tree_name in f:
+            return True
+    return False
+
+
 def uproot_num_entries(files: list[str], tree_name: str) -> dict[str, Any]:
     func = uproot.numentries if hasattr(uproot, "numentries") else uproot.num_entries
-    input_files = [f"{file}:{tree_name}" for file in files]
-    numentries = {}
+    good_files = [f for f in files if _tree_exists(f, tree_name)]
+    missing_trees = [f for f in files if f not in good_files]
+    input_files = [f"{file}:{tree_name}" for file in good_files]
+    numentries = dict.fromkeys(missing_trees, 0)
+    if not input_files:
+        return numentries
     for file, _, entries in func(input_files):
         numentries[file] = entries
     return numentries
@@ -117,25 +128,26 @@ def uproot_num_entries(files: list[str], tree_name: str) -> dict[str, Any]:
 def check_entries_uproot(
     files: list[str],
     tree_names: str | list[str],
-    no_empty: bool,
+    disallow_empty: bool,
     confirm_tree: bool = True,
     list_branches: bool = False,
     ignore_inaccessible: bool = False,
 ) -> tuple[list[str], dict[str, Any] | int, dict[str, Any]]:
-    no_empty = no_empty or confirm_tree
+    disallow_empty = disallow_empty or confirm_tree
     if not isinstance(tree_names, (tuple, list)):
         tree_names = [tree_names]
 
     if ignore_inaccessible:
         files = [f for f in files if os.access(f, os.R_OK)]
 
-    if not no_empty:
+    if not disallow_empty:
         n_entries = {tree: uproot_num_entries(files, tree) for tree in tree_names}
     else:
         n_entries = dict.fromkeys(tree_names, 0)  # type: ignore[arg-type]
         missing_trees = defaultdict(list)
         for tree in tree_names:
             totals = uproot_num_entries(files, tree)
+
             for name, entries in totals.items():
                 n_entries[tree] += entries
                 if entries <= 0:
