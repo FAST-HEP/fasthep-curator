@@ -42,10 +42,12 @@ jobs:
         run: |
           uv venv
           uv pip install "pylint>=3.2" .[test]
+        shell: micromamba-shell {0}
       - name: Run PyLint
         run: |
           echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
           uv run pylint fasthep_curator
+        shell: micromamba-shell {0}
 
   checks:
     name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
@@ -71,15 +73,17 @@ jobs:
           cache-environment: true
           post-cleanup: "all"
 
-      - name: Install package
+      - name: Install uv venv
         run: |
           uv venv
           uv pip install .[test]
+        shell: micromamba-shell {0}
 
       - name: Test package
         run: >-
           uv run pytest -ra --cov --cov-report=xml --cov-report=term
           --durations=20
+        shell: micromamba-shell {0}
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v5.4.2

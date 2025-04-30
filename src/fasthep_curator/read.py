@@ -4,6 +4,8 @@ from pathlib import Path
 from types import SimpleNamespace as Dataset
 from typing import Any, TypeAlias
 
+import yaml
+
 Prefix: TypeAlias = str | list[dict[str, Any]] | None
 
 
@@ -19,9 +21,7 @@ def __load_yaml_config(yaml_config: str) -> dict[str, Any]:
     Raises:
         RuntimeError: If the YAML configuration file is empty.
     """
-    import yaml
-
-    with Path(yaml_config).open("r") as f:
+    with Path(yaml_config).open("r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     if not config:
         msg = f"Empty config file: {yaml_config}"

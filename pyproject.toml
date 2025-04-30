@@ -28,6 +28,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
+  "loguru",
   "pyyaml",
   "uproot<6",
 ]
@@ -41,6 +42,7 @@ test = [
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pylint",
 ]
 docs = [
   "sphinx>=7.0",
