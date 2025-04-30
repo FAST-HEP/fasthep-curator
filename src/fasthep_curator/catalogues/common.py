@@ -89,6 +89,7 @@ def expand_file_list_generic(
     full_list: list[str] = []
     for name in files:
         scheme = urlparse(name).scheme
+        path = name
         if not scheme and not Path(name).is_absolute():
             path = str(Path(str(prefix)) / name) if prefix else os.path.relpath(name)
         expanded = glob(path)
