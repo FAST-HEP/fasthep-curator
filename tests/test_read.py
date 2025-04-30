@@ -92,7 +92,7 @@ def test_apply_prefix():
         fc_read.apply_prefix(prefix, files, None, dataset)
     assert "single-length dict" in str(e)
 
-    prefix = {"foo": 1, "bar": 3}
+    prefix = {"foo": 1, "bar": 3}  # type: ignore[assignment]
     with pytest.raises(ValueError) as e:  # noqa: PT011
         fc_read.apply_prefix(prefix, files, None, dataset)
     assert "string or a list" in str(e)

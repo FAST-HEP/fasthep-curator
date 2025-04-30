@@ -48,7 +48,7 @@ def from_string(dataset: str, defaults: dict[str, str] | None = None) -> dict[st
 
 
 def from_dict(
-    dataset: dict[str, str], defaults: dict[str, Any] | None
+    dataset: dict[str, Any], defaults: dict[str, Any] | None
 ) -> dict[str, Any]:
     """
     Load a dataset from a dictionary.
