@@ -40,7 +40,7 @@ class Expander(ABC):
     @staticmethod
     @abstractmethod
     def check_files(
-        *args: list[Any], **kwargs: dict[str, Any]
+        *args: Any, **kwargs: Any
     ) -> tuple[list[str], dict[str, int] | int, dict[str, Any]]: ...
 
 
