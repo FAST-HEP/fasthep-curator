@@ -6,6 +6,7 @@ import pytest
 from pytest_lazy_fixtures import lf
 
 from fasthep_curator.catalogues.common import (
+    check_entries_uproot,
     expand_file_list_generic,
     uproot_num_entries,
 )
@@ -54,22 +55,43 @@ def test_uproot_numentries(input_file, expected):
 
 
 @pytest.mark.parametrize(
-    ("input_file", "expected"),
+    ("input_files", "expected"),
     [
-        (lf("dummy_file_100"), 100),
-        (lf("dummy_file_202"), 202),
-        (lf("dummy_file_empty"), 0),
+        ([lf("dummy_file_100")], 100),
+        ([lf("dummy_file_202")], 202),
+        ([lf("dummy_file_empty")], 0),
     ],
 )
-def test_num_entries(input_file, expected):
-    from fasthep_curator.catalogues.common import check_entries_uproot
-
-    files = [str(input_file)]
+def test_num_entries(input_files, expected):
+    files = [str(input_file) for input_file in input_files]
     tree_name = "events"
     files, numentries, branches = check_entries_uproot(
-        files, tree_name, no_empty=False, list_branches=True
+        files, tree_name, disallow_empty=False, list_branches=True
     )
     assert numentries == expected
     assert isinstance(numentries, int)
+    assert isinstance(branches, dict)
+    assert len(branches) == 1
+
+
+@pytest.mark.parametrize(
+    ("input_files", "expected"),
+    [
+        ([lf("dummy_file_no_tree")], 0),
+        (
+            lf("all_dummy_files"),
+            302,
+        ),
+    ],
+)
+def test_num_entries_empty(input_files, expected):
+    files = [str(input_file) for input_file in input_files]
+    tree_name = "events"
+    files, numentries, branches = check_entries_uproot(
+        files, tree_name, disallow_empty=False, list_branches=True, confirm_tree=False
+    )
+    if isinstance(numentries, dict):
+        assert sum(numentries.values()) == expected
+    assert isinstance(numentries, dict)
     assert isinstance(branches, dict)
     assert len(branches) == 1

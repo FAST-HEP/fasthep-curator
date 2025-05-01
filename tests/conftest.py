@@ -94,3 +94,15 @@ def dummy_file_empty(dummy_file_dir):
 @pytest.fixture
 def dummy_file_no_tree(dummy_file_dir):
     return dummy_file_dir / "no-tree.root"
+
+
+@pytest.fixture
+def all_dummy_files(
+    dummy_file_100, dummy_file_202, dummy_file_empty, dummy_file_no_tree
+):
+    return [
+        dummy_file_100,
+        dummy_file_202,
+        dummy_file_empty,
+        dummy_file_no_tree,
+    ]
