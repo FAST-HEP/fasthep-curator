@@ -60,7 +60,7 @@ current status and plans for the FAST-HEP projects, including `fasthep-curator`
 You can install `fasthep-curator` using `pip`:
 
 ```bash
-pip install fasthep-curator[io-root, io-parquet, workflow-extras, plotting]
+pip install fasthep-curator
 ```
 
 ## Contributing
@@ -76,9 +76,9 @@ main ways to contribute to this project:
 3. You can also help by improving the documentation or fixing typos.
 
 Once you have something to work on, you can have a look at the
-[contributing guidelines](./.github/CONTRIBUTING.md). It contains
-recommendations for setting up your development environment, testing, and more
-(compiled by the Scientific Python Community).
+[contributing guidelines](https://github.com/FAST-HEP/fasthep-curator/blob/main/LICENSE/.github/CONTRIBUTING.md).
+It contains recommendations for setting up your development environment,
+testing, and more (compiled by the Scientific Python Community).
 
 > [!IMPORTANT]
 >
@@ -92,7 +92,8 @@ recommendations for setting up your development environment, testing, and more
 ## License
 
 This project is licensed under the terms of the Apache 2.0 license. See
-[LICENSE](./LICENSE) for more details.
+[LICENSE](https://github.com/FAST-HEP/fasthep-curator/blob/main/LICENSE) for
+more details.
 
 ## Acknowledgements
 
