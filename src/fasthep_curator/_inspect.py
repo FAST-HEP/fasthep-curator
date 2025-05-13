@@ -24,7 +24,32 @@ def _walk(obj: Any, name: str | None = None) -> Generator[tuple[str | None, Any]
             yield from _walk(obj[k], new_name)
 
 
+# def _dir_walk(obj: Any, name: str | None = None) -> Generator[tuple[str | None, Any]]:
+#     if not hasattr(obj, "keys") or len(obj.keys()) == 0:
+#         yield name, obj
+#     else:
+#         for k in sorted(obj.keys(recursive=False)):
+#             # if there is a '.' the first part of k it will be a duplicate
+#             tokens = k.split(".")
+#             new_name = name if name else k
+#             for t in tokens:
+#                 if new_name.endswith(t):
+#                     continue
+#                 new_name = ".".join([new_name, t])
+#             yield from _dir_walk(obj[k], new_name)
+
+
 def inspect(input_file: str) -> pd.DataFrame:
+    """
+    Inspect the contents of a ROOT file and return a DataFrame with metadata.
+    Args:
+        input_file (str): Path to the ROOT file to inspect.
+    Returns:
+        pd.DataFrame: DataFrame containing metadata about the ROOT file contents.
+
+        columns:
+          name, type, interpretation, compressedbytes, uncompressedbytes, hasStreamer, uproot_readable, is_empty
+    """
     f = uproot.open(input_file)
 
     data: list[Any] = []
@@ -91,3 +116,18 @@ def inspect_all(input_files: list[str]) -> pd.DataFrame:
         file_content["file"] = input_file
         dfs.append(file_content)
     return pd.concat(dfs, ignore_index=True)
+
+
+def get_trees(input_file: str) -> Generator[str, None, None]:
+    """
+    Get the list of trees in a ROOT file.
+    Args:
+        input_file (str): Path to the ROOT file to inspect.
+    Returns:
+        list[str]: List of tree names in the ROOT file.
+    """
+    with uproot.open(input_file) as f:
+        for name in f.keys(recursive=True):
+            obj = f[name]
+            if "TTree" in str(type(obj)):
+                yield name

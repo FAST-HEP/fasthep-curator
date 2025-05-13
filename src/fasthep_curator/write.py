@@ -172,7 +172,7 @@ def write_yaml(
         def ignore_aliases(self, _: Any) -> bool:
             return True
 
-    yaml_contents = yaml.dump(contents, Dumper=MyDumper, default_flow_style=False)
+    yaml_contents = yaml.dump(contents, Dumper=MyDumper, indent=2)
     with Path(out_file).open("w", encoding="utf-8") as out:
         out.write(yaml_contents)
 
