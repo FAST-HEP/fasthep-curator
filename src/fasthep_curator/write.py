@@ -147,12 +147,12 @@ def prepare_contents(
 
 def write_yaml(
     dataset: SimpleNamespace,
-    out_file: str,
+    output_file: str,
     append: bool = True,
     no_defaults_in_output: bool = False,
 ) -> str:
-    if Path(out_file).exists() and append:
-        datasets = read.from_yaml(out_file, expand_prefix=False)
+    if Path(output_file).exists() and append:
+        datasets = read.from_yaml(output_file, expand_prefix=False)
         datasets.append(dataset)
         contents = prepare_contents(
             datasets, no_defaults_in_output=no_defaults_in_output
@@ -173,7 +173,7 @@ def write_yaml(
             return True
 
     yaml_contents = yaml.dump(contents, Dumper=MyDumper, indent=2)
-    with Path(out_file).open("w", encoding="utf-8") as out:
+    with Path(output_file).open("w", encoding="utf-8") as out:
         out.write(yaml_contents)
 
     return yaml_contents
