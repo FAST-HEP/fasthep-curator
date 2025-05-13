@@ -5,6 +5,7 @@ from types import SimpleNamespace as Dataset
 from typing import Any, TypeAlias
 
 import yaml
+from loguru import logger
 
 Prefix: TypeAlias = str | list[dict[str, Any]] | None
 
@@ -203,3 +204,45 @@ def apply_prefix(
         raise ValueError(msg)
 
     return [file.format(prefix=prefix_str) for file in files]
+
+
+def check(
+    input_files: list[str], prefix: Prefix, fields: list[str] | None = None
+) -> list[str]:
+    """
+    Check the validity of the given files.
+
+    Args:
+        input_files (list[str]): List of file paths to check.
+        prefix (str | None): The prefix to be applied.
+
+    Returns:
+        list[str]: The list of valid files.
+    """
+    datasets = []
+    errors = []
+    for file in input_files:
+        if not Path(file).exists():
+            msg = f"File {file} does not exist"
+            raise RuntimeError(msg)
+        datasets += from_yaml(file, prefix=prefix)
+
+    for dataset in datasets:
+        if len(dataset.files) != dataset.nfiles:
+            msg = f"{dataset.name}: corrupted dataset: bad nfiles value, should be: {len(dataset.nfiles)}, got: {len(dataset.files)}"
+            errors.append(msg)
+            logger.error(msg)
+            continue
+        logger.info(f"== {dataset.name} ==")
+        if not fields:
+            continue
+        for field in fields:
+            if hasattr(dataset, field):
+                msg = f"{field=}: {getattr(dataset, field)}"
+                logger.info(msg)
+            else:
+                msg = f"Field '{field}' not found in dataset '{dataset.name}'"
+                errors.append(msg)
+                logger.error(msg)
+                continue
+    return errors

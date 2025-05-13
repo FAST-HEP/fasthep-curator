@@ -8,7 +8,7 @@ from types import SimpleNamespace as Dataset
 
 import typer
 
-from fasthep_curator import curate, inspect_all, write_yaml
+from fasthep_curator import check, curate, inspect_all, write_yaml
 
 app = typer.Typer()
 
@@ -47,25 +47,27 @@ def compile(
     write_yaml(Dataset(**curated_data), output, append=not overwrite)
 
 
-# @app.command()
-# def check(
-#     files: list[str],
-#     output: str = typer.Option(
-#         None, "--output", "-o", help="Name of output file list to expand things to"
-#     ),
-#     fields: list[str] = typer.Option(
-#         ["nFiles"], "--fields", "-f", help="List of fields to dump for each dataset"
-#     ),
-#     prefix: str = typer.Option(
-#         "", "--prefix", "-p", help="Choose one of the file prefixes to use"
-#     ),
-# ) -> None:
-#     """
-#     Check the validity of the given files.
+@app.command("check")
+def check_configs(
+    files: list[str],
+    fields: list[str] = typer.Option(
+        ["nfiles"], "--fields", "-f", help="List of fields to dump for each dataset"
+    ),
+    prefix: str = typer.Option(
+        "", "--prefix", "-p", help="Choose one of the file prefixes to use"
+    ),
+) -> None:
+    """
+    Check the validity of the given files.
 
-#     Args:
-#         files (list[str]): List of file paths to check.
-#     """
+    Args:
+        files (list[str]): List of file paths to check.
+    """
+    errors = check(files, prefix=prefix, fields=fields)
+    if errors:
+        msg = f"{len(errors)} errors have occurred"
+        typer.echo(msg)
+        raise typer.Exit(code=1)
 
 
 @app.command()
