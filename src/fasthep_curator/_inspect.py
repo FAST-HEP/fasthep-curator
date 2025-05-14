@@ -24,21 +24,6 @@ def _walk(obj: Any, name: str | None = None) -> Generator[tuple[str | None, Any]
             yield from _walk(obj[k], new_name)
 
 
-# def _dir_walk(obj: Any, name: str | None = None) -> Generator[tuple[str | None, Any]]:
-#     if not hasattr(obj, "keys") or len(obj.keys()) == 0:
-#         yield name, obj
-#     else:
-#         for k in sorted(obj.keys(recursive=False)):
-#             # if there is a '.' the first part of k it will be a duplicate
-#             tokens = k.split(".")
-#             new_name = name if name else k
-#             for t in tokens:
-#                 if new_name.endswith(t):
-#                     continue
-#                 new_name = ".".join([new_name, t])
-#             yield from _dir_walk(obj[k], new_name)
-
-
 def inspect(input_file: str) -> pd.DataFrame:
     """
     Inspect the contents of a ROOT file and return a DataFrame with metadata.
