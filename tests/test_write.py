@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -119,3 +120,38 @@ def test_get_file_list_expander():
     with pytest.raises(RuntimeError) as e:
         fc_write.get_file_list_expander("gobbledy gook")
     assert "Unknown catalogue" in str(e)
+
+
+def test_write_yaml(tmp_path):
+    datasets = [
+        {"name": "foo", "one": "i1", "two": 2, "three": "3", "a": ["ay", "ee", "eye"]},
+        {"name": "bar", "one": "1", "two": 2, "three": "3i", "a": ["eye", "oh", "you"]},
+        {"name": "baz", "one": "1", "two": 2, "three": "3j", "a": ["oh"]},
+    ]
+    contents = fc_write.prepare_contents(datasets)
+    fc_write.write_yaml(SimpleNamespace(**contents), tmp_path / "test.yaml")
+
+    with Path.open(tmp_path / "test.yaml") as f:
+        lines = f.readlines()
+    config = "\n".join(lines)
+
+    assert len(lines) == 24
+    assert lines[0].startswith("datasets:")
+    assert "defaults:" in config
+
+
+def test_user_function():
+    datasets = [
+        {"name": "foo", "one": "i1", "two": 2, "three": "3", "a": ["ay", "ee", "eye"]},
+        {"name": "bar", "one": "1", "two": 2, "three": "3i", "a": ["eye", "oh", "you"]},
+        {"name": "baz", "one": "1", "two": 2, "three": "3j", "a": ["oh"]},
+    ]
+    for d in datasets:
+        fc_write.process_user_function(d, "fasthep_curator.test_func.add_user")
+        print(d)
+    print(datasets)
+    contents = fc_write.prepare_contents(datasets)
+    print(contents)
+    for dataset in contents["datasets"]:
+        assert "user" in dataset
+        assert dataset["user"] == dataset["name"]
