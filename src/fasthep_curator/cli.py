@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from types import SimpleNamespace as Dataset
 
@@ -10,24 +10,21 @@ import typer
 
 from fasthep_curator import check, curate, inspect_all, write_yaml
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=False)
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """Enumeration of event types."""
 
     data = "data"
     mc = "mc"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 @app.command()
 def compile(
     files: list[str],
     dataset: str = typer.Option(..., "--dataset", "-d", help="Name of the dataset"),
-    event_type: EventType = EventType.data,
+    event_type: str = EventType.data,
     output: str = typer.Option(..., "--output", "-o", help="Output file path"),
     overwrite: bool = typer.Option(False, help="Overwrite existing files"),
 ) -> None:
@@ -116,4 +113,18 @@ def main() -> None:
     """
     Main function to run the CLI.
     """
+    import sys
+
+    from typer.main import get_command, get_command_name
+
+    is_unknown_command = len(sys.argv) == 1 or sys.argv[1] not in [
+        get_command_name(cmd) for cmd in get_command(app).commands
+    ]
+
+    if is_unknown_command and sys.argv[1] not in ["--help", "-h"]:
+        typer.echo(
+            "Enabling legacy behavior, please use `compile` command in the future."
+        )
+        sys.argv.insert(1, "compile")
+
     app()
