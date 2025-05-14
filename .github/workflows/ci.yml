@@ -42,6 +42,8 @@ jobs:
         run: |
           uv venv
           uv pip install "pylint>=3.2" .[test]
+          wget https://github.com/dmwm/dasgoclient/releases/download/v02.04.52/dasgoclient_amd64 -O .venv/bin/dasgoclient
+          chmod +x .venv/bin/dasgoclient
         shell: micromamba-shell {0}
       - name: Run PyLint
         run: |
