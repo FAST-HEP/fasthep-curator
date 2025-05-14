@@ -57,6 +57,7 @@ repos:
         additional_dependencies:
           - loguru
           - numpy
+          - omegaconf
           - pandas-stubs
           - pytest
           - types-PyYAML

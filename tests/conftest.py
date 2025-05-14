@@ -106,3 +106,13 @@ def all_dummy_files(
         dummy_file_empty,
         dummy_file_no_tree,
     ]
+
+
+@pytest.fixture
+def dummy_config_file_v0():
+    return Path(__file__).parent / "data" / "testdata_v0.yml"
+
+
+@pytest.fixture
+def dummy_config_file_v1():
+    return Path(__file__).parent / "data" / "testdata_v1.yml"

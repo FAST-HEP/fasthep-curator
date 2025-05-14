@@ -1,0 +1,14 @@
+datasets:
+  - name: data1
+    files:
+      - tests/data/events_100.root
+    nevents: 100
+  - name: data2
+    files:
+      - tests/data/events_200.root
+    nevents: 200
+
+defaults:
+  nfiles: 1
+  eventtype: data
+  tree: events;1

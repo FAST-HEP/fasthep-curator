@@ -29,6 +29,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
   "loguru",
+  "omegaconf",
   "pandas",
   "pyyaml",
   "typer",
