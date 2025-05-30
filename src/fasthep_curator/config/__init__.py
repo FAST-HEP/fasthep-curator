@@ -10,21 +10,25 @@ import fasthep_curator as fc
 
 from .v0 import CuratorConfig, Dataset
 
-DEFAULT_VERSION = "v0"
+DEFAULT_VERSION = 0
 
 
-def load_config(config_file: pathlib.Path) -> Any:
+def load_config(config_file: str) -> Any:
     """Load a config file and return the structured config."""
-    conf = OmegaConf.load(config_file)
+    config_path = pathlib.Path(config_file)
+    conf = OmegaConf.load(config_path)
     if not isinstance(conf, DictConfig):
         msg = f"Config file {config_file} is not a DictConfig, but {type(conf)}"
         raise TypeError(msg)
     # read version from config
-    version = conf.get("version", DEFAULT_VERSION)
+    version = "v" + str(conf.get("version", DEFAULT_VERSION))
     cfg_class = importlib.import_module(f".{version}", __package__).CuratorConfig
 
     curator = cfg_class.from_dictconfig(conf)
-    curator.metadata = {"config_file": str(config_file), "name": config_file.stem}
+    curator.metadata = {
+        "config_file": str(config_path.absolute()),
+        "name": config_path.stem,
+    }
     return curator
 
 
