@@ -36,10 +36,15 @@ def compact(config: CuratorConfig) -> CuratorConfig:
     """Move values common to all datasets into ``defaults``."""
     if not config.datasets:
         return config
+    if len(config.datasets) == 1:
+        # If there is only one dataset, no need to compact
+        return config
 
     dataset_dicts = [vars(d) for d in config.datasets]
 
+    ignore_keys = {"name", "files", "nevents", "nfiles"}
     common_keys = set(dataset_dicts[0].keys())
+    common_keys -= ignore_keys
     for d in dataset_dicts[1:]:
         common_keys &= set(d.keys())
 
