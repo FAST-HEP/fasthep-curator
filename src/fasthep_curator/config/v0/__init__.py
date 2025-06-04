@@ -13,7 +13,7 @@ class Dataset:
     """
 
     name: str
-    files: list[str] | None = None
+    files: list[str] = field(default_factory=list[str])
     nevents: int | None = None
     nfiles: int | None = None
     eventtype: str | None = None
@@ -29,7 +29,7 @@ class CuratorConfig:
 
     datasets: list[Dataset] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict[str, Any])
-    defaults: dict[str, Any] | None = None
+    defaults: dict[str, Any] = field(default_factory=dict[str, Any])
     version: int = 0
 
     @staticmethod
