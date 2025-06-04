@@ -56,11 +56,13 @@ class XrootdExpander(Expander):
     @staticmethod
     def expand_file_list(files: list[str], prefix: Prefix = None) -> list[str]:
         if xrd_glob is None:
-            msg = "XRootD client library not found. XRootD file list expansion will not be available."
-            raise RuntimeError(msg)
-        return expand_file_list_generic(
-            files, prefix, glob=partial(xrd_glob, raise_error=True)
-        )
+            logger.warning(
+                "XRootD client library not found. Falling back to local file list expansion."
+            )
+            glob_func = LocalGlobExpander.glob
+        else:
+            glob_func = partial(xrd_glob, raise_error=True)
+        return expand_file_list_generic(files, prefix, glob=glob_func)
 
     @staticmethod
     def check_files(
