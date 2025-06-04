@@ -14,7 +14,7 @@ class Dataset:
     files: list[str] | None = None
     n_events: int = 0
     n_files: int = 0
-    event_type: str = "data"
+    event_type: str | None = None
     trees: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict[str, Any])
 
