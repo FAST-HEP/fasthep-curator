@@ -6,15 +6,39 @@ fasthep-curator: Package for making (ROOT T)Trees into (Pandas) Tables
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from ._curate import curate, curate_all
 from ._inspect import inspect, inspect_all
 from ._version import version as __version__
-from .config import load_config
+from .config import CuratorConfig, Dataset, compact, load_config, write_config
 from .read import check
 from .write import write_yaml
 
+
+def add_dataset(
+    dataset_name: str,
+    files: list[str],
+    output_file: str,
+    event_type: str | None = None,
+    metadata: dict[str, str] | None = None,
+) -> None:
+    """Add a dataset to a curator configuration."""
+    config = load_config(output_file) if Path(output_file).exists() else CuratorConfig()
+
+    curated_data = curate(
+        dataset_name,
+        {"files": files, "event_type": event_type, "metadata": metadata or {}},
+    )
+
+    config.datasets.append(Dataset(**curated_data))
+    config = compact(config)
+    write_config(config, output_file)
+
+
 __all__ = [
     "__version__",
+    "add_dataset",
     "check",
     "curate",
     "curate_all",
