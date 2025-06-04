@@ -32,6 +32,34 @@ def load_config(config_file: str) -> Any:
     return curator
 
 
+def compact(config: CuratorConfig) -> CuratorConfig:
+    """Move values common to all datasets into ``defaults``."""
+    if not config.datasets:
+        return config
+
+    dataset_dicts = [vars(d) for d in config.datasets]
+
+    common_keys = set(dataset_dicts[0].keys())
+    for d in dataset_dicts[1:]:
+        common_keys &= set(d.keys())
+
+    defaults: dict[str, Any] = {}
+    for key in list(common_keys):
+        values = [d[key] for d in dataset_dicts]
+        first = values[0]
+        if first is not None and all(v == first for v in values):
+            defaults[key] = first
+            for d in dataset_dicts:
+                del d[key]
+
+    if config.defaults:
+        config.defaults.update(defaults)
+    else:
+        config.defaults = defaults
+    config.datasets = [Dataset(**d) for d in dataset_dicts]
+    return config
+
+
 def write_config(config: CuratorConfig, config_file: pathlib.Path | str) -> None:
     """Write a config file."""
     with pathlib.Path(config_file).open("w", encoding="utf-8") as f:
