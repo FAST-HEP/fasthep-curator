@@ -63,6 +63,24 @@ You can install `fasthep-curator` using `pip`:
 pip install fasthep-curator
 ```
 
+## Usage
+
+A python usage example can be found in the examples/python_usage.ipynb notebook.
+However, typically you can use the Command Line Interface (CLI) to create
+dataset descriptions. First, install the FAST-HEP CLI:
+
+```bash
+pip install fasthep-cli
+```
+
+Then, you can create a dataset description using the `fasthep-curator` command:
+
+```bash
+fh curator add tests/data/events_100.root -d data -o /tmp/100.yaml
+```
+
+Note: `fh` is a shorthand for the `fasthep` command.
+
 ## Contributing
 
 You had a look and are interested to contribute? That's great! There are three
