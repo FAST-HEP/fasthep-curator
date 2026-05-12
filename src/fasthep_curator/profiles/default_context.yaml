@@ -1,0 +1,3 @@
+execution_hooks:
+  - kind: hep.dataset_context
+    events: [partition_start]

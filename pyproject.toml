@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fasthep-curator"
+version = "0.1.0"
+description = "Diagnostics, metadata, observers, and execution hooks for FAST-HEP workflows."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fasthep-flow",
+    "awkward",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+"fasthep_curator.profiles" = ["**/*.yaml"]

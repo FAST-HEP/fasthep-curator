@@ -1,0 +1,6 @@
+execution_hooks:
+  - kind: hep.error_report
+    events: [on_node_error]
+
+  - kind: hep.warning_capture
+    events: [around_node]
