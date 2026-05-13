@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 BRANCHES_OBSERVER_SPEC = {
     "name": "hep.branches",
     "kind": "observer",

@@ -5,14 +5,13 @@ import warnings
 
 import awkward as ak
 import pytest
-
-from fasthep_curator.impl.hooks.dataset_context import DatasetContextHook
-from fasthep_curator.impl.hooks.error_report import ErrorReportHook
-from fasthep_curator.impl.hooks.warning_capture import WarningCaptureHook
 from hepflow.compiler.data_flow import context_symbols_from_plan
 from hepflow.model.plan import ExecutionNode, ExecutionPartition, ExecutionPlan
 from hepflow.runtime.hooks.manager import HookManager
 
+from fasthep_curator.impl.hooks.dataset_context import DatasetContextHook
+from fasthep_curator.impl.hooks.error_report import ErrorReportHook
+from fasthep_curator.impl.hooks.warning_capture import WarningCaptureHook
 
 CURATOR_HOOK_REGISTRY = {
     "hooks": {
@@ -110,7 +109,7 @@ def test_warning_capture_hook_records_warning() -> None:
     }
 
     with hook.around_node(node=node, inputs={}, ctx=ctx):
-        warnings.warn("hello", UserWarning)
+        warnings.warn("hello", UserWarning, stacklevel=2)
 
     assert len(hook.records) == 1
     assert hook.records[0]["message"] == "hello"
@@ -139,7 +138,7 @@ def test_hook_manager_loads_curator_hooks_and_validates_events() -> None:
     )
     with pytest.raises(
         ValueError,
-        match="Hook hep.dataset_context does not support event before_node",
+        match=r"Hook hep.dataset_context does not support event before_node",
     ):
         HookManager.from_plan(invalid)
 

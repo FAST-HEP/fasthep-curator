@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import importlib.resources as resources
 
-import fasthep_curator
 from hepflow.compiler.profiles import load_profile_config
 from hepflow.registry.loaders import load_object
+
+import fasthep_curator
 
 
 def _profile_text(name: str) -> str:

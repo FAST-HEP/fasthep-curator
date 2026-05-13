@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from hepflow.model.hooks import HookSpec
 
-
 DATASET_CONTEXT_HOOK_SPEC = HookSpec(
     name="hep.dataset_context",
     version="1.0",

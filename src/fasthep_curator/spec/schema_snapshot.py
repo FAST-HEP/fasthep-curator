@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 SCHEMA_SNAPSHOT_OBSERVER_SPEC = {
     "name": "hep.schema_snapshot",
     "kind": "observer",

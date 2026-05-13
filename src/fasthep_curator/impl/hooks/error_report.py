@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 import json
-from pathlib import Path
 import traceback
+from pathlib import Path
 from typing import Any
 
 from hepflow.model.hooks import ExecutionHook
@@ -20,7 +21,7 @@ def describe_runtime_value(value: Any) -> dict[str, Any]:
     }
 
     if isinstance(value, dict):
-        summary["keys"] = [str(key) for key in value.keys()]
+        summary["keys"] = [str(key) for key in value]
 
     fields = getattr(value, "fields", None)
     if fields is not None:
@@ -29,10 +30,8 @@ def describe_runtime_value(value: Any) -> dict[str, Any]:
         except Exception:
             summary["fields"] = "<unavailable>"
 
-    try:
+    with contextlib.suppress(Exception):
         summary["length"] = len(value)
-    except Exception:
-        pass
 
     return summary
 

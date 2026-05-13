@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import awkward as ak
-
 from hepflow.model.io import OutputResult
 
 

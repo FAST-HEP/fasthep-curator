@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import warnings
 from contextlib import contextmanager
 from typing import Any
-import warnings
 
 from hepflow.model.hooks import ExecutionHook
 
