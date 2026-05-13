@@ -55,6 +55,7 @@ repos:
         files: src|tests
         args: []
         additional_dependencies:
+          - fasthep-toolbench
           - loguru
           - numpy
           - omegaconf

@@ -28,6 +28,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
+  "fasthep-toolbench",
   "loguru",
   "omegaconf",
   "pandas",

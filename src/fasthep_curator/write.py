@@ -151,18 +151,18 @@ def write_yaml(
     append: bool = False,
     no_defaults_in_output: bool = False,
 ) -> str:
-    if Path(output_file).exists() and append:
-        existing_datasets = read.from_yaml(output_file, expand_prefix=False)
-        existing_datasets.append(SimpleNamespace(**datasets))
-        contents = prepare_contents(
-            existing_datasets, no_defaults_in_output=no_defaults_in_output
-        )
-    else:
-        contents = {}
-        if "defaults" in datasets:
-            defaults = datasets.pop("defaults")
-            contents["defaults"] = defaults
-        contents["datasets"] = list(datasets.values())
+    # if Path(output_file).exists() and append:
+    #     existing_datasets = read.from_yaml(output_file, expand_prefix=False)
+    #     existing_datasets.append(SimpleNamespace(**datasets))
+    #     contents = prepare_contents(
+    #         existing_datasets, no_defaults_in_output=no_defaults_in_output
+    #     )
+    # else:
+    contents = {}
+    if "defaults" in datasets:
+        defaults = datasets.pop("defaults")
+        contents["defaults"] = defaults
+    contents["datasets"] = list(datasets.values())
 
     # https://stackoverflow.com/questions/25108581/python-yaml-dump-bad-indentation
     class MyDumper(yaml.Dumper):
