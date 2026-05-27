@@ -86,6 +86,7 @@ def test_error_report_hook_writes_report(tmp_path, capsys) -> None:
     report_path = (
         tmp_path
         / "reports"
+        / "diagnostics"
         / "errors"
         / "stage_Bad"
         / "events__dy__0.json"

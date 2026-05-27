@@ -88,12 +88,13 @@ def write_node_error_report(
         path = (
             outdir
             / "reports"
+            / "diagnostics"
             / out
             / safe_node_id
             / f"{partition_id}.json"
         )
     else:
-        path = outdir / "reports" / out / f"{safe_node_id}.json"
+        path = outdir / "reports" / "diagnostics" / out / f"{safe_node_id}.json"
 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
