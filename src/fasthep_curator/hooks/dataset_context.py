@@ -2,7 +2,24 @@ from __future__ import annotations
 
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook
+from hepflow.model.hooks import ExecutionHook, HookSpec
+
+DATASET_CONTEXT_HOOK_SPEC = HookSpec(
+    name="hep.dataset_context",
+    version="1.0",
+    events=["partition_start"],
+    context_outputs=[
+        "dataset",
+        "dataset_name",
+        "dataset_eventtype",
+        "dataset_group",
+        "dataset_is_data",
+        "dataset_xs",
+        "dataset_nevents",
+        "dataset_n_unskimmed_events",
+        "dataset_filter_efficiency",
+    ],
+)
 
 
 class DatasetContextHook(ExecutionHook):

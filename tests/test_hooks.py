@@ -9,23 +9,23 @@ from hepflow.compiler.data_flow import context_symbols_from_plan
 from hepflow.model.plan import ExecutionNode, ExecutionPartition, ExecutionPlan
 from hepflow.runtime.hooks.manager import HookManager
 
-from fasthep_curator.impl.hooks.dataset_context import DatasetContextHook
-from fasthep_curator.impl.hooks.error_report import ErrorReportHook
-from fasthep_curator.impl.hooks.warning_capture import WarningCaptureHook
+from fasthep_curator.hooks.dataset_context import DatasetContextHook
+from fasthep_curator.hooks.error_report import ErrorReportHook
+from fasthep_curator.hooks.warning_capture import WarningCaptureHook
 
 CURATOR_HOOK_REGISTRY = {
     "hooks": {
         "hep.dataset_context": {
-            "spec": "fasthep_curator.spec.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC",
-            "impl": "fasthep_curator.impl.hooks.dataset_context:DatasetContextHook",
+            "spec": "fasthep_curator.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC",
+            "impl": "fasthep_curator.hooks.dataset_context:DatasetContextHook",
         },
         "hep.error_report": {
-            "spec": "fasthep_curator.spec.hooks.error_report:ERROR_REPORT_HOOK_SPEC",
-            "impl": "fasthep_curator.impl.hooks.error_report:ErrorReportHook",
+            "spec": "fasthep_curator.hooks.error_report:ERROR_REPORT_HOOK_SPEC",
+            "impl": "fasthep_curator.hooks.error_report:ErrorReportHook",
         },
         "hep.warning_capture": {
-            "spec": "fasthep_curator.spec.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC",
-            "impl": "fasthep_curator.impl.hooks.warning_capture:WarningCaptureHook",
+            "spec": "fasthep_curator.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC",
+            "impl": "fasthep_curator.hooks.warning_capture:WarningCaptureHook",
         },
     }
 }

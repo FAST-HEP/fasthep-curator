@@ -28,16 +28,16 @@ def test_load_profile_resources() -> None:
 
 def test_load_hook_and_observer_objects() -> None:
     hook_spec = load_object(
-        "fasthep_curator.spec.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC"
+        "fasthep_curator.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC"
     )
     hook_impl = load_object(
-        "fasthep_curator.impl.hooks.dataset_context:DatasetContextHook"
+        "fasthep_curator.hooks.dataset_context:DatasetContextHook"
     )
     observer_spec = load_object(
-        "fasthep_curator.spec.schema_snapshot:SCHEMA_SNAPSHOT_OBSERVER_SPEC"
+        "fasthep_curator.observers.schema_snapshot:SCHEMA_SNAPSHOT_OBSERVER_SPEC"
     )
     observer_impl = load_object(
-        "fasthep_curator.impl.schema_snapshot:run_schema_snapshot_observer"
+        "fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer"
     )
 
     assert hook_spec.name == "hep.dataset_context"

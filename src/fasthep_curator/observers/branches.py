@@ -7,6 +7,41 @@ from typing import Any
 import awkward as ak
 from hepflow.model.io import OutputResult
 
+BRANCHES_OBSERVER_SPEC = {
+    "name": "hep.branches",
+    "kind": "observer",
+    "version": "1.0",
+    "input": {
+        "name": "target",
+        "kind": "event_stream",
+        "required": True,
+    },
+    "params": {
+        "path": {
+            "type": "string",
+            "required": False,
+            "description": "Optional explicit output path for the report.",
+        },
+        "out": {
+            "type": "string",
+            "required": False,
+            "description": "Optional logical output name.",
+        },
+        "format": {
+            "type": "string",
+            "required": False,
+            "default": "json",
+            "allowed": ["json"],
+            "description": "Report serialization format.",
+        },
+    },
+    "result": {
+        "kind": "report",
+        "default_output_family": "reports",
+        "description": "Branch summary report.",
+    },
+}
+
 
 def run_branches_observer(
     target: Any,
@@ -16,6 +51,7 @@ def run_branches_observer(
     format: str = "json",
     ctx: dict[str, Any] | None = None,
 ) -> OutputResult:
+    del ctx
     if format != "json":
         raise ValueError(f"Unsupported branches observer format: {format!r}")
 

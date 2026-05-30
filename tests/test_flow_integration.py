@@ -43,7 +43,7 @@ def test_compile_merges_curator_registry_and_profiles(tmp_path: Path) -> None:
     plan = compile_author_file(author_path, outdir=tmp_path / "build")
 
     assert plan.registry["observers"]["hep.schema_snapshot"]["impl"] == (
-        "fasthep_curator.impl.schema_snapshot:run_schema_snapshot_observer"
+        "fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer"
     )
     assert "hep.dataset_context" in plan.registry["hooks"]
     assert {hook["kind"] for hook in plan.execution_hooks} == {

@@ -6,7 +6,13 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook
+from hepflow.model.hooks import ExecutionHook, HookSpec
+
+ERROR_REPORT_HOOK_SPEC = HookSpec(
+    name="hep.error_report",
+    version="1.0",
+    events=["on_node_error"],
+)
 
 
 def abbreviate_list(items: list[Any], *, max_items: int = 20) -> list[Any]:
@@ -192,11 +198,10 @@ class ErrorReportHook(ExecutionHook):
                 out=self.out,
             )
         except Exception as report_exc:
-            print(f"Failed to write error report: {report_exc}")
-        print(
-            format_node_error_context(
-                error_ctx,
-                error_path=error_path,
-                max_console_fields=self.max_console_fields,
-            )
+            print(f"Failed to write error report: {report_exc}")  # noqa: T201
+        message = format_node_error_context(
+            error_ctx,
+            error_path=error_path,
+            max_console_fields=self.max_console_fields,
         )
+        print(message)  # noqa: T201

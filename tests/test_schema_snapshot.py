@@ -5,7 +5,7 @@ from pathlib import Path
 
 import awkward as ak
 
-from fasthep_curator.impl.schema_snapshot import run_schema_snapshot_observer
+from fasthep_curator.observers.schema_snapshot import run_schema_snapshot_observer
 
 
 def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> None:

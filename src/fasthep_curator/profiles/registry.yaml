@@ -1,22 +1,22 @@
 registry:
   observers:
     hep.branches:
-      spec: fasthep_curator.spec.branches:BRANCHES_OBSERVER_SPEC
-      impl: fasthep_curator.impl.branches:run_branches_observer
+      spec: fasthep_curator.observers.branches:BRANCHES_OBSERVER_SPEC
+      impl: fasthep_curator.observers.branches:run_branches_observer
 
     hep.schema_snapshot:
-      spec: fasthep_curator.spec.schema_snapshot:SCHEMA_SNAPSHOT_OBSERVER_SPEC
-      impl: fasthep_curator.impl.schema_snapshot:run_schema_snapshot_observer
+      spec: fasthep_curator.observers.schema_snapshot:SCHEMA_SNAPSHOT_OBSERVER_SPEC
+      impl: fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer
 
   hooks:
     hep.dataset_context:
-      spec: fasthep_curator.spec.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC
-      impl: fasthep_curator.impl.hooks.dataset_context:DatasetContextHook
+      spec: fasthep_curator.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC
+      impl: fasthep_curator.hooks.dataset_context:DatasetContextHook
 
     hep.error_report:
-      spec: fasthep_curator.spec.hooks.error_report:ERROR_REPORT_HOOK_SPEC
-      impl: fasthep_curator.impl.hooks.error_report:ErrorReportHook
+      spec: fasthep_curator.hooks.error_report:ERROR_REPORT_HOOK_SPEC
+      impl: fasthep_curator.hooks.error_report:ErrorReportHook
 
     hep.warning_capture:
-      spec: fasthep_curator.spec.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC
-      impl: fasthep_curator.impl.hooks.warning_capture:WarningCaptureHook
+      spec: fasthep_curator.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC
+      impl: fasthep_curator.hooks.warning_capture:WarningCaptureHook

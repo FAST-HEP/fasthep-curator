@@ -4,7 +4,13 @@ import warnings
 from contextlib import contextmanager
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook
+from hepflow.model.hooks import ExecutionHook, HookSpec
+
+WARNING_CAPTURE_HOOK_SPEC = HookSpec(
+    name="hep.warning_capture",
+    version="1.0",
+    events=["around_node", "run_end"],
+)
 
 
 class WarningCaptureHook(ExecutionHook):
@@ -16,6 +22,7 @@ class WarningCaptureHook(ExecutionHook):
 
     @contextmanager
     def around_node(self, *, node, inputs: dict[str, Any], ctx: dict[str, Any]):
+        del inputs
         with warnings.catch_warnings(record=True) as caught:
             if self.always:
                 warnings.simplefilter("always")
@@ -42,6 +49,7 @@ class WarningCaptureHook(ExecutionHook):
             ctx.setdefault("_warnings", []).append(record)
 
     def run_end(self, *, plan, ctx: dict[str, Any], summary: dict[str, Any]) -> None:
+        del plan, ctx
         summary.setdefault("warnings", list(self.records))
 
     def summary(self) -> dict[str, Any]:
