@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 import awkward as ak
 
 from fasthep_curator.observers.schema_snapshot import run_schema_snapshot_observer
+
+
+@dataclass(frozen=True)
+class FakeMetadataSchema:
+    fields: list[str]
+    awkward_type: dict[str, str]
+    entry_count: int | None
 
 
 def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> None:
@@ -47,6 +55,29 @@ def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> Non
     assert report["entry_count"] == 1
     assert isinstance(report["awkward_type"], dict)
     assert "awkward_type_full" not in report
+
+
+def test_schema_snapshot_observer_accepts_metadata_only_schema(tmp_path: Path) -> None:
+    target = FakeMetadataSchema(
+        fields=["Muon_pt", "Muon_eta"],
+        awkward_type={"Muon_pt": "float[]", "Muon_eta": "float[]"},
+        entry_count=1000,
+    )
+
+    result = run_schema_snapshot_observer(
+        target,
+        node_id="read.events",
+        out="schema",
+        ctx={"outdir": str(tmp_path)},
+    )
+
+    report = json.loads(Path(result.path).read_text(encoding="utf-8"))
+    assert report["fields"] == ["Muon_pt", "Muon_eta"]
+    assert report["entry_count"] == 1000
+    assert report["awkward_type"] == {
+        "Muon_eta": "float[]",
+        "Muon_pt": "float[]",
+    }
 
 
 def test_schema_snapshot_observer_keeps_non_envelope_dict_shape(tmp_path: Path) -> None:

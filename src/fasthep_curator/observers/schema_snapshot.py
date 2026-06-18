@@ -78,7 +78,12 @@ def run_schema_snapshot_observer(
 
     inspected_target, envelope = _unwrap_for_schema(target)
     fields = _extract_fields(inspected_target)
-    awkward_info = _awkward_schema_info(inspected_target)
+    schema_info = _metadata_schema_info(inspected_target)
+    awkward_info = (
+        schema_info
+        if schema_info is not None
+        else _awkward_schema_info(inspected_target)
+    )
     partition = dict(ctx.get("partition") or {})
 
     report = {
@@ -142,11 +147,33 @@ def _unwrap_for_schema(target: Any) -> tuple[Any, dict[str, Any]]:
 
 
 def _extract_fields(target: Any) -> list[str]:
+    if _is_metadata_schema(target):
+        return [str(field) for field in target.fields]
     if hasattr(target, "fields"):
         return list(target.fields)
     if isinstance(target, dict):
         return list(target.keys())
     return []
+
+
+def _metadata_schema_info(target: Any) -> dict[str, Any] | None:
+    if not _is_metadata_schema(target):
+        return None
+    awkward_type = target.awkward_type
+    if not isinstance(awkward_type, dict):
+        awkward_type = {}
+    return {
+        "entry_count": getattr(target, "entry_count", None),
+        "awkward_type": {str(key): str(value) for key, value in awkward_type.items()},
+    }
+
+
+def _is_metadata_schema(target: Any) -> bool:
+    return (
+        hasattr(target, "fields")
+        and hasattr(target, "awkward_type")
+        and not hasattr(target, "__getitem__")
+    )
 
 
 def _awkward_schema_info(target: Any) -> dict[str, Any]:
