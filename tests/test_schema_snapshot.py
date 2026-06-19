@@ -41,11 +41,11 @@ def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> Non
         tmp_path
         / "reports"
         / "schema"
-        / "schema"
         / "stage_BasicVars"
         / "events__dy__0.json"
     )
     assert result.path == str(expected)
+    assert "schema/schema" not in expected.as_posix()
     report = json.loads(expected.read_text(encoding="utf-8"))
     assert report["fields"] == ["Muon_Pt", "NIsoMuon"]
     assert report["envelope"]["unwrapped"] is True
@@ -55,6 +55,53 @@ def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> Non
     assert report["entry_count"] == 1
     assert isinstance(report["awkward_type"], dict)
     assert "awkward_type_full" not in report
+
+
+def test_schema_snapshot_observer_writes_multiple_partition_reports(
+    tmp_path: Path,
+) -> None:
+    for partition_id in ["events__dy__0", "events__dy__1"]:
+        run_schema_snapshot_observer(
+            {"events": ak.Array({"Muon_Pt": [[1.0]], "NIsoMuon": [1]})},
+            node_id="stage.BasicVars",
+            out="schema",
+            ctx={
+                "outdir": str(tmp_path),
+                "dataset_name": "dy",
+                "partition": {"id": partition_id},
+            },
+        )
+
+    reports = sorted((tmp_path / "reports" / "schema").rglob("*.json"))
+    assert reports == [
+        tmp_path / "reports" / "schema" / "stage_BasicVars" / "events__dy__0.json",
+        tmp_path / "reports" / "schema" / "stage_BasicVars" / "events__dy__1.json",
+    ]
+    assert all("schema/schema" not in path.as_posix() for path in reports)
+
+
+def test_schema_snapshot_observer_custom_out_is_relative_to_schema_root(
+    tmp_path: Path,
+) -> None:
+    result = run_schema_snapshot_observer(
+        {"events": ak.Array({"Muon_Pt": [[1.0]]})},
+        node_id="stage.BasicVars",
+        out="debug",
+        ctx={
+            "outdir": str(tmp_path),
+            "partition": {"id": "events__dy__0"},
+        },
+    )
+
+    expected = (
+        tmp_path
+        / "reports"
+        / "schema"
+        / "debug"
+        / "stage_BasicVars"
+        / "events__dy__0.json"
+    )
+    assert result.path == str(expected)
 
 
 def test_schema_snapshot_observer_accepts_metadata_only_schema(tmp_path: Path) -> None:

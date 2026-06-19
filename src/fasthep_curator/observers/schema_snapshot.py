@@ -241,15 +241,11 @@ def _resolve_output_path(
         return Path(path)
 
     outdir = Path(ctx.get("outdir") or ".")
+    report_root = outdir / "reports" / "schema"
+    if out and out != "schema":
+        report_root = report_root / out
     safe_node_id = node_id.replace(".", "_").replace("/", "_")
     partition_id = dict(ctx.get("partition") or {}).get("id")
     if partition_id:
-        return (
-            outdir
-            / "reports"
-            / "schema"
-            / out
-            / safe_node_id
-            / f"{partition_id}.json"
-        )
-    return outdir / "reports" / "schema" / out / f"{safe_node_id}.json"
+        return report_root / safe_node_id / f"{partition_id}.json"
+    return report_root / f"{safe_node_id}.json"
