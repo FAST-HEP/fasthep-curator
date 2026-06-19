@@ -20,3 +20,10 @@ registry:
     hep.warning_capture:
       spec: fasthep_curator.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC
       impl: fasthep_curator.hooks.warning_capture:WarningCaptureHook
+
+  compile_hooks:
+    dataset_metadata.root_tree:
+      when: after_datasets
+      impl: fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets
+      outputs:
+        - dataset_metadata

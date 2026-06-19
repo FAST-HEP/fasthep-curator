@@ -39,11 +39,15 @@ def test_load_hook_and_observer_objects() -> None:
     observer_impl = load_object(
         "fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer"
     )
+    compile_hook_impl = load_object(
+        "fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets"
+    )
 
     assert hook_spec.name == "hep.dataset_context"
     assert callable(hook_impl)
     assert observer_spec["name"] == "hep.schema_snapshot"
     assert callable(observer_impl)
+    assert callable(compile_hook_impl)
 
 
 def test_flow_loads_qualified_curator_profiles(tmp_path) -> None:
@@ -61,6 +65,7 @@ def test_flow_loads_qualified_curator_profiles(tmp_path) -> None:
     )
 
     assert "hep.dataset_context" in registry["registry"]["hooks"]
+    assert "dataset_metadata.root_tree" in registry["registry"]["compile_hooks"]
     assert context["execution_hooks"] == [
         {"kind": "hep.dataset_context", "events": ["partition_start"]}
     ]
