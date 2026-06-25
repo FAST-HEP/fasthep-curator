@@ -9,8 +9,8 @@ ROOT_TREE_DATASET_METADATA_SPEC = {
     "kind": "compile_hook",
     "version": "1.0",
     "lifecycle": {"when": "after_datasets"},
-    "inputs": ["datasets", "sources"],
-    "outputs": ["dataset_metadata"],
+    "input": {"artifacts": ["datasets", "sources"]},
+    "result": {"artifacts": ["dataset_metadata"]},
 }
 
 

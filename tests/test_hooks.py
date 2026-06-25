@@ -144,7 +144,7 @@ def test_hook_manager_loads_curator_hooks_and_validates_events() -> None:
         HookManager.from_plan(invalid)
 
 
-def test_dataset_context_outputs_are_data_flow_context_symbols() -> None:
+def test_dataset_context_results_are_data_flow_context_symbols() -> None:
     plan = ExecutionPlan(
         registry=CURATOR_HOOK_REGISTRY,
         execution_hooks=[

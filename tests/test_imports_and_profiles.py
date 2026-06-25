@@ -49,13 +49,13 @@ def test_load_hook_and_observer_objects() -> None:
     assert hook_spec["name"] == "hep.dataset_context"
     assert hook_spec["kind"] == "hook"
     assert hook_spec["lifecycle"]["events"] == ["partition_start"]
-    assert "dataset_name" in hook_spec["context_outputs"]
+    assert "dataset_name" in hook_spec["result"]["context"]
     assert callable(hook_impl)
     assert observer_spec["name"] == "hep.schema_snapshot"
     assert callable(observer_impl)
     assert compile_hook_spec["kind"] == "compile_hook"
     assert compile_hook_spec["lifecycle"]["when"] == "after_datasets"
-    assert compile_hook_spec["outputs"] == ["dataset_metadata"]
+    assert compile_hook_spec["result"]["artifacts"] == ["dataset_metadata"]
     assert callable(compile_hook_impl)
 
 
