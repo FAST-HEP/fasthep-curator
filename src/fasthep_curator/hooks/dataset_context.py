@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook, HookSpec
+from hepflow.model.hooks import ExecutionHook
 
-DATASET_CONTEXT_HOOK_SPEC = HookSpec(
-    name="hep.dataset_context",
-    version="1.0",
-    events=["partition_start"],
-    context_outputs=[
+DATASET_CONTEXT_HOOK_SPEC = {
+    "name": "hep.dataset_context",
+    "kind": "hook",
+    "version": "1.0",
+    "lifecycle": {"events": ["partition_start"]},
+    "context_outputs": [
         "dataset",
         "dataset_name",
         "dataset_eventtype",
@@ -19,7 +20,7 @@ DATASET_CONTEXT_HOOK_SPEC = HookSpec(
         "dataset_n_unskimmed_events",
         "dataset_filter_efficiency",
     ],
-)
+}
 
 
 class DatasetContextHook(ExecutionHook):

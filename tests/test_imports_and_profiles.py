@@ -43,7 +43,10 @@ def test_load_hook_and_observer_objects() -> None:
         "fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets"
     )
 
-    assert hook_spec.name == "hep.dataset_context"
+    assert hook_spec["name"] == "hep.dataset_context"
+    assert hook_spec["kind"] == "hook"
+    assert hook_spec["lifecycle"]["events"] == ["partition_start"]
+    assert "dataset_name" in hook_spec["context_outputs"]
     assert callable(hook_impl)
     assert observer_spec["name"] == "hep.schema_snapshot"
     assert callable(observer_impl)

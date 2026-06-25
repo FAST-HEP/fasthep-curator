@@ -4,13 +4,14 @@ import warnings
 from contextlib import contextmanager
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook, HookSpec
+from hepflow.model.hooks import ExecutionHook
 
-WARNING_CAPTURE_HOOK_SPEC = HookSpec(
-    name="hep.warning_capture",
-    version="1.0",
-    events=["around_node", "run_end"],
-)
+WARNING_CAPTURE_HOOK_SPEC = {
+    "name": "hep.warning_capture",
+    "kind": "hook",
+    "version": "1.0",
+    "lifecycle": {"events": ["around_node", "run_end"]},
+}
 
 
 class WarningCaptureHook(ExecutionHook):

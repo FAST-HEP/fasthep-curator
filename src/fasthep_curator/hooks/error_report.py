@@ -6,13 +6,14 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from hepflow.model.hooks import ExecutionHook, HookSpec
+from hepflow.model.hooks import ExecutionHook
 
-ERROR_REPORT_HOOK_SPEC = HookSpec(
-    name="hep.error_report",
-    version="1.0",
-    events=["on_node_error"],
-)
+ERROR_REPORT_HOOK_SPEC = {
+    "name": "hep.error_report",
+    "kind": "hook",
+    "version": "1.0",
+    "lifecycle": {"events": ["on_node_error"]},
+}
 
 
 def abbreviate_list(items: list[Any], *, max_items: int = 20) -> list[Any]:
