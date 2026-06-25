@@ -4,6 +4,15 @@ from typing import Any
 
 import uproot
 
+ROOT_TREE_DATASET_METADATA_SPEC = {
+    "name": "dataset_metadata.root_tree",
+    "kind": "compile_hook",
+    "version": "1.0",
+    "lifecycle": {"when": "after_datasets"},
+    "inputs": ["datasets", "sources"],
+    "outputs": ["dataset_metadata"],
+}
+
 
 def inspect_root_tree_datasets(ctx: Any, **params: Any) -> dict[str, Any]:
     """Inspect ROOT tree entry counts for declared datasets.

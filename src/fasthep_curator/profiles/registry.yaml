@@ -23,7 +23,5 @@ registry:
 
   compile_hooks:
     dataset_metadata.root_tree:
-      when: after_datasets
+      spec: fasthep_curator.compile_hooks.root_tree_metadata:ROOT_TREE_DATASET_METADATA_SPEC
       impl: fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets
-      outputs:
-        - dataset_metadata

@@ -39,6 +39,9 @@ def test_load_hook_and_observer_objects() -> None:
     observer_impl = load_object(
         "fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer"
     )
+    compile_hook_spec = load_object(
+        "fasthep_curator.compile_hooks.root_tree_metadata:ROOT_TREE_DATASET_METADATA_SPEC"
+    )
     compile_hook_impl = load_object(
         "fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets"
     )
@@ -50,6 +53,9 @@ def test_load_hook_and_observer_objects() -> None:
     assert callable(hook_impl)
     assert observer_spec["name"] == "hep.schema_snapshot"
     assert callable(observer_impl)
+    assert compile_hook_spec["kind"] == "compile_hook"
+    assert compile_hook_spec["lifecycle"]["when"] == "after_datasets"
+    assert compile_hook_spec["outputs"] == ["dataset_metadata"]
     assert callable(compile_hook_impl)
 
 
