@@ -25,3 +25,21 @@ registry:
     dataset_metadata.root_tree:
       spec: fasthep_curator.compile_hooks.root_tree_metadata:ROOT_TREE_DATASET_METADATA_SPEC
       impl: fasthep_curator.compile_hooks.root_tree_metadata:inspect_root_tree_datasets
+
+  transforms:
+    curator.root_tree_schema:
+      spec: fasthep_curator.operations.schema_validation:ROOT_TREE_SCHEMA_SPEC
+      impl: fasthep_curator.operations.schema_validation:run_root_tree_schema
+
+    curator.compare_schemas:
+      spec: fasthep_curator.operations.schema_validation:COMPARE_SCHEMAS_SPEC
+      impl: fasthep_curator.operations.schema_validation:run_compare_schemas
+
+  product_handlers:
+    schema_snapshot:
+      merge: fasthep_curator.products:merge_schema_products
+      materialize: fasthep_curator.products:materialize_schema_product
+
+    schema_comparison:
+      merge: fasthep_curator.products:merge_schema_comparison_products
+      materialize: fasthep_curator.products:materialize_schema_comparison_product
