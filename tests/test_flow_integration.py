@@ -3,12 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import yaml
-from hepflow.api import compile_author_file
+from hepflow.api import compile_workflow_file
 
 
 def test_compile_merges_curator_registry_and_profiles(tmp_path: Path) -> None:
-    author_path = tmp_path / "author.yaml"
-    author = {
+    workflow_path = tmp_path / "workflow.yaml"
+    workflow = {
         "version": "1.0",
         "use": {
             "profiles": [
@@ -38,9 +38,9 @@ def test_compile_merges_curator_registry_and_profiles(tmp_path: Path) -> None:
         ],
         "analysis": {"stages": []},
     }
-    author_path.write_text(yaml.safe_dump(author, sort_keys=False), encoding="utf-8")
+    workflow_path.write_text(yaml.safe_dump(workflow, sort_keys=False), encoding="utf-8")
 
-    plan = compile_author_file(author_path, outdir=tmp_path / "build")
+    plan = compile_workflow_file(workflow_path, outdir=tmp_path / "build")
 
     assert plan.registry["observers"]["hep.schema_snapshot"]["impl"] == (
         "fasthep_curator.observers.schema_snapshot:run_schema_snapshot_observer"
