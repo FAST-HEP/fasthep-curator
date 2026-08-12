@@ -92,8 +92,8 @@ def run_compare_schemas(
     reference_name = reference_label or _schema_dataset_name(reference_schema)
     target_name = target_label or _schema_dataset_name(target_schema)
 
-    reference_fields = _field_map(reference_schema)
-    target_fields = _field_map(target_schema)
+    reference_fields = _field_map(reference_schema, counterpart_schema=target_schema)
+    target_fields = _field_map(target_schema, counterpart_schema=reference_schema)
     reference_names = set(reference_fields)
     target_names = set(target_fields)
     common_names = sorted(reference_names & target_names)
@@ -198,11 +198,14 @@ def _inspect_root_tree_schema(
             if callable(interpretations_attr)
             else dict(interpretations_attr or {})
         )
+        physical_counters = _physical_counter_map(tree)
         field_details = {
             field: _field_detail(
                 field,
                 typenames=typenames,
                 interpretations=interpretations,
+                counter_for=physical_counters.get(field, []),
+                counter_branch=_counter_branch_for(tree, field),
             )
             for field in fields
         }
@@ -215,6 +218,7 @@ def _inspect_root_tree_schema(
             "entry_count": int(tree.num_entries),
             "fields": fields,
             "field_details": field_details,
+            "physical_counters": physical_counters,
             "metadata": {
                 **dict(dataset_record.get("meta") or {}),
                 "eventtype": dataset_record.get("eventtype"),
@@ -228,10 +232,12 @@ def _field_detail(
     *,
     typenames: dict[str, Any],
     interpretations: dict[str, Any],
-) -> dict[str, str]:
+    counter_for: list[str],
+    counter_branch: str | None,
+) -> dict[str, Any]:
     typename = str(typenames.get(field, "unknown"))
     interpretation = str(interpretations.get(field, "unknown"))
-    return {
+    detail: dict[str, Any] = {
         "name": field,
         "type": typename,
         "primitive_type": _primitive_type(typename),
@@ -239,6 +245,44 @@ def _field_detail(
         "nullable": "unknown",
         "interpretation": interpretation,
     }
+    if counter_for:
+        detail["physical_role"] = "ttree_counter"
+        detail["counter_for"] = list(counter_for)
+    if counter_branch is not None:
+        detail["counter_branch"] = counter_branch
+    return detail
+
+
+def _physical_counter_map(tree: Any) -> dict[str, list[str]]:
+    counters: dict[str, list[str]] = {}
+    for field in list(tree.keys()):
+        counter = _counter_branch_for(tree, str(field))
+        if counter is None:
+            continue
+        counters.setdefault(counter, []).append(str(field))
+    return {name: sorted(fields) for name, fields in counters.items()}
+
+
+def _counter_branch_for(tree: Any, field: str) -> str | None:
+    try:
+        branch = tree[field]
+        leaves = branch.member("fLeaves")
+    except Exception:
+        return None
+    for leaf in leaves:
+        try:
+            leaf_count = leaf.member("fLeafCount")
+        except Exception:
+            continue
+        if leaf_count is None:
+            continue
+        try:
+            name = leaf_count.member("fName")
+        except Exception:
+            continue
+        if isinstance(name, str) and name:
+            return name
+    return None
 
 
 def _primitive_type(type_name: str) -> str:
@@ -267,13 +311,22 @@ def _normalise_schema(value: Any, label: str) -> dict[str, Any]:
     raise ValueError(f"Malformed {label} schema input")
 
 
-def _field_map(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
+def _field_map(
+    schema: dict[str, Any],
+    *,
+    counterpart_schema: dict[str, Any] | None = None,
+) -> dict[str, dict[str, Any]]:
     details = schema.get("field_details")
     if isinstance(details, dict):
         return {
             str(name): dict(detail)
             for name, detail in details.items()
             if isinstance(detail, dict)
+            and not _exclude_physical_counter(
+                str(name),
+                detail,
+                counterpart_schema=counterpart_schema,
+            )
         }
     awkward_type = schema.get("awkward_type")
     if isinstance(awkward_type, dict):
@@ -287,6 +340,25 @@ def _field_map(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
             for name, type_name in awkward_type.items()
         }
     raise ValueError("Malformed schema input: missing field_details or awkward_type")
+
+
+def _exclude_physical_counter(
+    name: str,
+    detail: dict[str, Any],
+    *,
+    counterpart_schema: dict[str, Any] | None,
+) -> bool:
+    if detail.get("physical_role") != "ttree_counter":
+        return False
+    if counterpart_schema is None:
+        return True
+    counterpart_details = counterpart_schema.get("field_details")
+    if not isinstance(counterpart_details, dict):
+        return True
+    counterpart = counterpart_details.get(name)
+    if not isinstance(counterpart, dict):
+        return True
+    return counterpart.get("physical_role") == "ttree_counter"
 
 
 def _schema_dataset_name(schema: dict[str, Any]) -> str:

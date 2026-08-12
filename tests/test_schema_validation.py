@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any, ClassVar
 
+import awkward as ak
+import numpy as np
 import pytest
 import uproot
 
@@ -49,6 +51,93 @@ def test_root_tree_schema_full_mode_includes_unused_branch(tmp_path: Path) -> No
 def test_root_tree_schema_rejects_non_full_mode() -> None:
     with pytest.raises(ValueError, match="full_schema=true"):
         run_root_tree_schema(dataset="sample", full_schema=False, ctx={"datasets": {}})
+
+
+def test_root_tree_schema_marks_physical_jagged_counters(tmp_path: Path) -> None:
+    root_path = tmp_path / "events.root"
+    with uproot.recreate(root_path) as root_file:
+        root_file.mktree("Events", {
+            "Muon_pt": ak.Array([[1.0, 2.0], [], [3.0]]),
+            "nReal": np.array([10, 20, 30], dtype=np.int32),
+        })
+
+    schema = run_root_tree_schema(
+        dataset="sample",
+        ctx={
+            "datasets": {
+                "sample": {
+                    "name": "sample",
+                    "files": [str(root_path)],
+                }
+            }
+        },
+    )
+
+    assert "nMuon_pt" in schema["fields"]
+    assert schema["physical_counters"] == {"nMuon_pt": ["Muon_pt"]}
+    assert schema["field_details"]["nMuon_pt"]["physical_role"] == "ttree_counter"
+    assert schema["field_details"]["nMuon_pt"]["counter_for"] == ["Muon_pt"]
+    assert schema["field_details"]["Muon_pt"]["counter_branch"] == "nMuon_pt"
+    assert "physical_role" not in schema["field_details"]["nReal"]
+
+
+def test_compare_schemas_ignores_physical_counters_but_keeps_real_n_fields() -> None:
+    reference = _schema(
+        "legacy",
+        {
+            "Muon_pt": {"primitive_type": "double", "shape": "jagged"},
+            "nReal": {"primitive_type": "int32_t", "shape": "scalar"},
+        },
+    )
+    target = _schema(
+        "fasthep",
+        {
+            "Muon_pt": {"primitive_type": "double", "shape": "jagged"},
+            "nMuon_pt": {
+                "primitive_type": "int32_t",
+                "shape": "scalar",
+                "physical_role": "ttree_counter",
+                "counter_for": ["Muon_pt"],
+            },
+            "nReal": {"primitive_type": "int32_t", "shape": "scalar"},
+        },
+    )
+
+    comparison = run_compare_schemas(reference=reference, target=target)
+
+    assert comparison["common_fields"] == ["Muon_pt", "nReal"]
+    assert comparison["only_in_target"] == []
+    assert comparison["compatible_fields"] == ["Muon_pt", "nReal"]
+    assert comparison["summary"]["target_fields"] == 2
+
+
+def test_compare_schemas_keeps_counter_branch_when_counterpart_is_logical() -> None:
+    reference = _schema(
+        "legacy",
+        {
+            "Muon_pt": {"primitive_type": "double", "shape": "jagged"},
+            "nMuon": {
+                "primitive_type": "int32_t",
+                "shape": "scalar",
+                "physical_role": "ttree_counter",
+                "counter_for": ["Muon_pt"],
+            },
+        },
+    )
+    target = _schema(
+        "fasthep",
+        {
+            "Muon_pt": {"primitive_type": "double", "shape": "jagged"},
+            "nMuon": {"primitive_type": "int32_t", "shape": "scalar"},
+        },
+    )
+
+    comparison = run_compare_schemas(reference=reference, target=target)
+
+    assert comparison["common_fields"] == ["Muon_pt", "nMuon"]
+    assert comparison["compatible_fields"] == ["Muon_pt", "nMuon"]
+    assert comparison["only_in_reference"] == []
+    assert comparison["only_in_target"] == []
 
 
 def test_compare_schemas_reports_diagnostic_differences() -> None:
@@ -157,7 +246,7 @@ def test_schema_comparison_products_materialize_structured_json(tmp_path: Path) 
     assert (tmp_path / "artifacts" / "comparisons" / "manifest.json").exists()
 
 
-def _schema(dataset: str, fields: dict[str, dict[str, str]]) -> dict[str, Any]:
+def _schema(dataset: str, fields: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return {
         "kind": "schema_snapshot",
         "dataset": dataset,
