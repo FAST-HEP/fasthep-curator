@@ -18,6 +18,7 @@ def _profile_text(name: str) -> str:
 
 def test_import_package() -> None:
     assert fasthep_curator is not None
+    assert callable(fasthep_curator.api.inspect_root_tree_schema)
 
 
 def test_load_profile_resources() -> None:

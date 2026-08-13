@@ -135,6 +135,59 @@ source_schema:
     phi: float
 ```
 
+## ROOT Schema Inspection
+
+Curator provides the reusable Python schema-inspection API. Command-line access
+is exposed through the central FAST-HEP CLI.
+
+Inspect a ROOT TTree interactively:
+
+```bash
+fasthep inspect schema input.root --tree Events
+```
+
+The default output is a readable table with field name, logical dtype, shape,
+and ROOT storage type.
+
+Extract a pasteable YAML list for `keep:` or `drop:` workflow parameters:
+
+```bash
+fasthep inspect schema input.root \
+  --tree Events \
+  --include 'GenJet*' \
+  --include 'GenMET*' \
+  --include 'Generator_*' \
+  --format yaml-list
+```
+
+Generate a starter `hep.align_schema` document:
+
+```bash
+fasthep inspect schema input.root \
+  --tree Events \
+  --include 'GenJetAK8_*' \
+  --format alignment
+```
+
+Field filters use shell-style glob matching. Repeated `--include` options are
+unioned in source field order; repeated `--exclude` options remove matches
+after includes:
+
+```bash
+fasthep inspect schema input.root \
+  --tree Events \
+  --include 'Gen*' \
+  --exclude 'GenPart_*'
+```
+
+The same inspection implementation is available from Python:
+
+```python
+from fasthep_curator.api import inspect_root_tree_schema
+
+schema = inspect_root_tree_schema("input.root", tree="Events")
+```
+
 ## Design principles
 
 `fasthep-curator` focuses on:

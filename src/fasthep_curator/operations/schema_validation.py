@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-import uproot
+from fasthep_curator.api import inspect_root_tree_schema
 
 ROOT_TREE_SCHEMA_SPEC = {
     "name": "curator.root_tree_schema",
@@ -62,11 +62,15 @@ def run_root_tree_schema(
     dataset_record = _dataset_record(ctx, dataset_name)
     file_path = str(file or _first_dataset_file(dataset_record, dataset_name))
 
-    schema = _inspect_root_tree_schema(
-        file_path=file_path,
-        tree_name=tree_name,
-        dataset_name=dataset_name,
-        dataset_record=dataset_record,
+    schema = inspect_root_tree_schema(
+        file_path,
+        tree=tree_name,
+        dataset=dataset_name,
+        metadata={
+            **dict(dataset_record.get("meta") or {}),
+            "eventtype": dataset_record.get("eventtype"),
+            "group": dataset_record.get("group"),
+        },
     )
     if hasattr(ctx.get("provenance"), "record_operation"):
         ctx["provenance"].record_operation(
@@ -170,119 +174,6 @@ def run_compare_schemas(
             },
         )
     return comparison
-
-
-def _inspect_root_tree_schema(
-    *,
-    file_path: str,
-    tree_name: str,
-    dataset_name: str,
-    dataset_record: dict[str, Any],
-) -> dict[str, Any]:
-    path = Path(file_path)
-    if not _is_remote_path(file_path) and not path.exists():
-        raise FileNotFoundError(f"ROOT input file does not exist: {file_path}")
-
-    with uproot.open(file_path if _is_remote_path(file_path) else path) as root_file:
-        try:
-            tree = root_file[tree_name]
-        except KeyError as exc:
-            raise KeyError(
-                f"Tree {tree_name!r} not found in ROOT file: {file_path}"
-            ) from exc
-        fields = [str(field) for field in list(tree.keys())]
-        typenames = dict(tree.typenames())
-        interpretations_attr = getattr(tree, "interpretations", None)
-        interpretations = (
-            dict(interpretations_attr())
-            if callable(interpretations_attr)
-            else dict(interpretations_attr or {})
-        )
-        physical_counters = _physical_counter_map(tree)
-        field_details = {
-            field: _field_detail(
-                field,
-                typenames=typenames,
-                interpretations=interpretations,
-                counter_for=physical_counters.get(field, []),
-                counter_branch=_counter_branch_for(tree, field),
-            )
-            for field in fields
-        }
-        return {
-            "version": "1.0",
-            "kind": "schema_snapshot",
-            "dataset": dataset_name,
-            "tree": tree_name,
-            "source_file": file_path,
-            "entry_count": int(tree.num_entries),
-            "fields": fields,
-            "field_details": field_details,
-            "physical_counters": physical_counters,
-            "metadata": {
-                **dict(dataset_record.get("meta") or {}),
-                "eventtype": dataset_record.get("eventtype"),
-                "group": dataset_record.get("group"),
-            },
-        }
-
-
-def _field_detail(
-    field: str,
-    *,
-    typenames: dict[str, Any],
-    interpretations: dict[str, Any],
-    counter_for: list[str],
-    counter_branch: str | None,
-) -> dict[str, Any]:
-    typename = str(typenames.get(field, "unknown"))
-    interpretation = str(interpretations.get(field, "unknown"))
-    detail: dict[str, Any] = {
-        "name": field,
-        "type": typename,
-        "primitive_type": _primitive_type(typename),
-        "shape": _shape(typename, interpretation),
-        "nullable": "unknown",
-        "interpretation": interpretation,
-    }
-    if counter_for:
-        detail["physical_role"] = "ttree_counter"
-        detail["counter_for"] = list(counter_for)
-    if counter_branch is not None:
-        detail["counter_branch"] = counter_branch
-    return detail
-
-
-def _physical_counter_map(tree: Any) -> dict[str, list[str]]:
-    counters: dict[str, list[str]] = {}
-    for field in list(tree.keys()):
-        counter = _counter_branch_for(tree, str(field))
-        if counter is None:
-            continue
-        counters.setdefault(counter, []).append(str(field))
-    return {name: sorted(fields) for name, fields in counters.items()}
-
-
-def _counter_branch_for(tree: Any, field: str) -> str | None:
-    try:
-        branch = tree[field]
-        leaves = branch.member("fLeaves")
-    except Exception:
-        return None
-    for leaf in leaves:
-        try:
-            leaf_count = leaf.member("fLeafCount")
-        except Exception:
-            continue
-        if leaf_count is None:
-            continue
-        try:
-            name = leaf_count.member("fName")
-        except Exception:
-            continue
-        if isinstance(name, str) and name:
-            return name
-    return None
 
 
 def _primitive_type(type_name: str) -> str:
@@ -395,10 +286,6 @@ def _required_string(value: Any, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} must be a non-empty string")
     return value.strip()
-
-
-def _is_remote_path(path: str) -> bool:
-    return "://" in str(path)
 
 
 __all__ = [
