@@ -1,0 +1,140 @@
+# fasthep-curator Agent Instructions
+
+`fasthep-curator` provides dataset metadata, schema inspection, diagnostics, and
+validation extensions for FAST-HEP workflows. These instructions are
+repository-local and should remain valid when this repository is cloned on its
+own.
+
+## Ownership
+
+This repository owns:
+
+- dataset and ROOT tree inspection that can produce reusable metadata without
+  reading full event payloads;
+- schema snapshots, schema formatting, schema comparison, and validation
+  operations;
+- Flow extension profiles for diagnostics, dataset context, observers, compile
+  hooks, transforms, and product handlers;
+- runtime diagnostics such as captured warnings, structured error reports, and
+  dataset context evidence;
+- provenance and environment/resource evidence emitted by curator extensions.
+
+This repository does not own:
+
+- Flow's compiler, graph, plan model, core runtime records, orchestration, or
+  backend interfaces;
+- Carpenter's event processing, awkward-array transforms, ROOT sources/sinks,
+  selections, cutflows, or histogram filling;
+- Render's human-readable reports, plots, styles, or presentation layer;
+- CLI command routing, terminal UX, exit-code policy, or command formatting.
+
+## Extension Boundaries
+
+Curator integrates with `fasthep-flow` through public extension contracts:
+profiles, registry entries, observers, runtime hooks, compile hooks, transforms,
+and product handlers. Package code should use those contracts rather than
+importing Flow compiler or runtime internals.
+
+Keep machine-readable diagnostics and metadata products separate from CLI or
+rendered presentation. The CLI may call public Curator APIs; Render may consume
+Curator outputs; neither should force Curator to embed presentation-specific
+formatting in its metadata contracts.
+
+## Important Locations
+
+- `src/fasthep_curator/api.py` - public schema inspection and formatting API.
+- `src/fasthep_curator/schema_format.py` - schema field filtering and rendering
+  helpers used by public APIs and operations.
+- `src/fasthep_curator/compile_hooks/root_tree_metadata.py` - compile-time ROOT
+  tree metadata inspection.
+- `src/fasthep_curator/hooks/` - dataset context, warning capture, and error
+  report runtime hooks.
+- `src/fasthep_curator/observers/` - branch and schema snapshot observers.
+- `src/fasthep_curator/operations/schema_validation.py` - registry operations
+  for root-tree schema inspection and schema comparison.
+- `src/fasthep_curator/products/` - product-handler package.
+- `src/fasthep_curator/profiles/registry.yaml` - registered Curator extension
+  specs.
+- `src/fasthep_curator/profiles/default_context.yaml` and
+  `src/fasthep_curator/profiles/runtime_diagnostics.yaml` - opt-in runtime
+  context and diagnostics profiles.
+- `tests/test_schema_validation.py` - schema API, formatting, operation, and
+  comparison coverage.
+- `tests/test_schema_snapshot.py` - observer and schema snapshot product tests.
+- `tests/test_root_tree_metadata_hook.py` - compile-hook metadata inspection.
+- `tests/test_hooks.py` - runtime hook behaviour and diagnostics.
+- `tests/test_flow_integration.py` and `tests/test_imports_and_profiles.py` -
+  Flow/profile registration integration.
+
+`pixi.toml` defines a `docs` task for future Sphinx documentation, but this
+repository currently has no `docs/` source tree.
+
+## Commands
+
+Install and use Pixi from the repository root:
+
+```bash
+pixi install
+pixi run format
+pixi run lint
+pixi run lint-fix
+pixi run typecheck
+pixi run test
+pixi run build
+pixi run check
+pixi run ci
+pixi run check-dist
+pixi run docs
+pixi run docs-clean
+```
+
+`check` runs `lint`, `typecheck`, and `test`. `ci` runs `check` and `build`.
+`docs` expects `docs/` to exist before it can succeed. The Pixi environments
+include `py311`, `py313`, `py314`, and `docs`; use the default environment
+unless a compatibility check specifically needs another Python version.
+
+## Public Contracts
+
+- `fasthep_curator.api` is the public Python API. Keep it small and delegate
+  implementation to focused modules.
+- Serialized schema snapshots, comparisons, diagnostics, and provenance are
+  public contracts once consumed by tests, profiles, CLI, Render, or analysis
+  repositories. Keep them deterministic and explicitly versioned where
+  appropriate.
+- Preserve stable ordering in metadata outputs. When paths, environment values,
+  or generated directories appear in tests, normalize them instead of asserting
+  machine-specific values.
+- Distinguish requested, configured, and resolved resources. Retain enough
+  evidence to explain fallbacks, symlinks, and resource identity.
+- Never record credentials, tokens, proxy material, or other secrets in
+  provenance, diagnostics, warnings, reports, or captured environment data.
+- Avoid silent fallback behaviour that hides validation failures. If a fallback
+  is intentional, record why it happened in machine-readable metadata.
+
+## Generated Files and Care Areas
+
+- `src/fasthep_curator/_version.py` is generated by Hatch/Hatch-VCS. Do not edit
+  it by hand; keep `src/fasthep_curator/_version.pyi` aligned with imports.
+- Runtime reports under workflow output directories, schema products, temporary
+  ROOT files, distribution artifacts, and documentation builds are generated
+  outputs. Do not check them in unless they are deliberate test fixtures.
+- Metadata inspection should avoid loading complete datasets or event arrays
+  when branch names, typenames, counters, entry counts, or file-level metadata
+  are sufficient.
+
+## Focused Testing
+
+- Schema API, filters, deterministic formatting, and comparisons:
+  `pixi run pytest tests/test_schema_validation.py`.
+- Schema snapshot observers and output structure:
+  `pixi run pytest tests/test_schema_snapshot.py`.
+- ROOT tree metadata compile hooks:
+  `pixi run pytest tests/test_root_tree_metadata_hook.py`.
+- Dataset context, warning capture, and error diagnostics hooks:
+  `pixi run pytest tests/test_hooks.py`.
+- Registry/profile integration with Flow:
+  `pixi run pytest tests/test_imports_and_profiles.py tests/test_flow_integration.py`.
+
+Mock remote files, uproot handles, and environment-dependent state for routine
+tests. Do not require network access, large external datasets, CVMFS, batch
+infrastructure, or credentials for default checks.
