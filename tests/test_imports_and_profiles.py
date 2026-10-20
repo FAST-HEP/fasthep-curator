@@ -25,15 +25,14 @@ def test_load_profile_resources() -> None:
     assert "hep.schema_snapshot" in _profile_text("registry.yaml")
     assert "hep.dataset_context" in _profile_text("default_context.yaml")
     assert "hep.warning_capture" in _profile_text("runtime_diagnostics.yaml")
+    assert "hep.resource_usage" in _profile_text("resource_usage.yaml")
 
 
 def test_load_hook_and_observer_objects() -> None:
     hook_spec = load_object(
         "fasthep_curator.hooks.dataset_context:DATASET_CONTEXT_HOOK_SPEC"
     )
-    hook_impl = load_object(
-        "fasthep_curator.hooks.dataset_context:DatasetContextHook"
-    )
+    hook_impl = load_object("fasthep_curator.hooks.dataset_context:DatasetContextHook")
     observer_spec = load_object(
         "fasthep_curator.observers.schema_snapshot:SCHEMA_SNAPSHOT_OBSERVER_SPEC"
     )
@@ -83,3 +82,14 @@ def test_flow_loads_qualified_curator_profiles(tmp_path) -> None:
         "hep.error_report",
         "hep.warning_capture",
     }
+
+
+def test_flow_loads_resource_usage_profile(tmp_path) -> None:
+    usage = load_profile_config(
+        "fasthep_curator:resource_usage",
+        project_root=tmp_path,
+    )
+
+    assert usage["execution_hooks"] == [
+        {"kind": "hep.resource_usage", "events": ["partition_start", "partition_end"]}
+    ]

@@ -17,6 +17,10 @@ registry:
       spec: fasthep_curator.hooks.error_report:ERROR_REPORT_HOOK_SPEC
       impl: fasthep_curator.hooks.error_report:ErrorReportHook
 
+    hep.resource_usage:
+      spec: fasthep_curator.hooks.resource_usage:RESOURCE_USAGE_HOOK_SPEC
+      impl: fasthep_curator.hooks.resource_usage:ResourceUsageHook
+
     hep.warning_capture:
       spec: fasthep_curator.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC
       impl: fasthep_curator.hooks.warning_capture:WarningCaptureHook

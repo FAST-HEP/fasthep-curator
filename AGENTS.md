@@ -47,8 +47,9 @@ formatting in its metadata contracts.
   helpers used by public APIs and operations.
 - `src/fasthep_curator/compile_hooks/root_tree_metadata.py` - compile-time ROOT
   tree metadata inspection.
-- `src/fasthep_curator/hooks/` - dataset context, warning capture, and error
-  report runtime hooks.
+- `src/fasthep_curator/hooks/` - dataset context, warning capture, error
+  report and resource usage (wall/CPU time, peak RSS per partition) runtime
+  hooks.
 - `src/fasthep_curator/observers/` - branch and schema snapshot observers.
 - `src/fasthep_curator/operations/schema_validation.py` - registry operations
   for root-tree schema inspection and schema comparison.
@@ -56,8 +57,9 @@ formatting in its metadata contracts.
 - `src/fasthep_curator/profiles/registry.yaml` - registered Curator extension
   specs.
 - `src/fasthep_curator/profiles/default_context.yaml` and
-  `src/fasthep_curator/profiles/runtime_diagnostics.yaml` - opt-in runtime
-  context and diagnostics profiles.
+  `src/fasthep_curator/profiles/runtime_diagnostics.yaml` and
+  `src/fasthep_curator/profiles/resource_usage.yaml` - opt-in runtime context,
+  diagnostics and resource measurement profiles.
 - `tests/test_schema_validation.py` - schema API, formatting, operation, and
   comparison coverage.
 - `tests/test_schema_snapshot.py` - observer and schema snapshot product tests.

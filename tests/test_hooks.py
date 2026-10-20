@@ -11,6 +11,7 @@ from hepflow.runtime.hooks.manager import HookManager
 
 from fasthep_curator.hooks.dataset_context import DatasetContextHook
 from fasthep_curator.hooks.error_report import ErrorReportHook
+from fasthep_curator.hooks.resource_usage import ResourceUsageHook
 from fasthep_curator.hooks.warning_capture import WarningCaptureHook
 
 CURATOR_HOOK_REGISTRY = {
@@ -22,6 +23,10 @@ CURATOR_HOOK_REGISTRY = {
         "hep.error_report": {
             "spec": "fasthep_curator.hooks.error_report:ERROR_REPORT_HOOK_SPEC",
             "impl": "fasthep_curator.hooks.error_report:ErrorReportHook",
+        },
+        "hep.resource_usage": {
+            "spec": "fasthep_curator.hooks.resource_usage:RESOURCE_USAGE_HOOK_SPEC",
+            "impl": "fasthep_curator.hooks.resource_usage:ResourceUsageHook",
         },
         "hep.warning_capture": {
             "spec": "fasthep_curator.hooks.warning_capture:WARNING_CAPTURE_HOOK_SPEC",
@@ -157,3 +162,61 @@ def test_dataset_context_results_are_data_flow_context_symbols() -> None:
     assert "dataset_name" in symbols
     assert "dataset_is_data" in symbols
     assert "dataset_xs" in symbols
+
+
+def test_resource_usage_hook_records_time_and_memory_per_partition() -> None:
+    partition = ExecutionPartition(
+        id="events__dy__0",
+        dataset="dy",
+        file="dy.root",
+        source="events",
+        part="0",
+        start=0,
+        stop=10,
+    )
+    ctx = {"dataset_name": "dy"}
+    hook = ResourceUsageHook()
+
+    hook.partition_start(partition=partition, ctx=ctx)
+    ballast = bytearray(50 * 1024 * 1024)  # make the peak visible
+    sum(range(200_000))
+    del ballast
+    hook.partition_end(partition=partition, ctx=ctx, value_store={})
+
+    (record,) = hook.results()["resource_usage"]
+    assert record["partition_id"] == "events__dy__0"
+    assert record["dataset_name"] == "dy"
+    assert record["wall_time_s"] > 0
+    assert record["cpu_user_s"] >= 0
+    assert record["max_rss_mb"] > 0
+    assert record["max_rss_scope"] in {"partition", "process"}
+
+
+def test_resource_usage_hook_ignores_unstarted_partition() -> None:
+    hook = ResourceUsageHook()
+
+    hook.partition_end(partition=None, ctx={}, value_store={})
+
+    assert hook.results() == {"resource_usage": []}
+
+
+def test_resource_usage_hook_results_reach_usage_summary() -> None:
+    partition = ExecutionPartition(
+        id="events__dy__0",
+        dataset="dy",
+        file="dy.root",
+        source="events",
+        part="0",
+        start=0,
+        stop=10,
+    )
+    manager = HookManager([(ResourceUsageHook(), {"partition_start", "partition_end"})])
+    ctx: dict = {}
+
+    manager.partition_start(partition=partition, ctx=ctx)
+    manager.partition_end(partition=partition, ctx=ctx, value_store={})
+    (item,) = manager.usage_summary()["enabled"]
+
+    assert [r["partition_id"] for r in item["results"]["resource_usage"]] == [
+        "events__dy__0"
+    ]
