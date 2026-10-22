@@ -57,7 +57,13 @@ def run_schema_snapshot_observer(
     mode: str = "partition",
     path: str | None = None,
     ctx: dict[str, Any] | None = None,
-) -> OutputResult:
+) -> OutputResult | None:
+    """Write a schema snapshot report and return a reference to it.
+
+    Returns ``None`` when ``mode="first_partition"`` and this is a later
+    partition: nothing is written, and Flow rejects an artifact reference
+    without a ``uri``.
+    """
     if format != "json":
         raise ValueError(f"Unsupported schema snapshot format: {format!r}")
     if mode not in {"partition", "first_partition"}:
@@ -65,16 +71,7 @@ def run_schema_snapshot_observer(
 
     ctx = dict(ctx or {})
     if mode == "first_partition" and not _is_first_partition(ctx):
-        return OutputResult(
-            kind="report",
-            path="",
-            format="json",
-            metadata={
-                "node_id": node_id,
-                "skipped": True,
-                "reason": "not first partition",
-            },
-        )
+        return None
 
     inspected_target, envelope = _unwrap_for_schema(target)
     fields = _extract_fields(inspected_target)

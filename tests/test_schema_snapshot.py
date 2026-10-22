@@ -44,6 +44,7 @@ def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> Non
         / "stage_BasicVars"
         / "events__dy__0.json"
     )
+    assert result is not None
     assert result.path == str(expected)
     assert "schema/schema" not in expected.as_posix()
     report = json.loads(expected.read_text(encoding="utf-8"))
@@ -101,6 +102,7 @@ def test_schema_snapshot_observer_custom_out_is_relative_to_schema_root(
         / "stage_BasicVars"
         / "events__dy__0.json"
     )
+    assert result is not None
     assert result.path == str(expected)
 
 
@@ -118,6 +120,7 @@ def test_schema_snapshot_observer_accepts_metadata_only_schema(tmp_path: Path) -
         ctx={"outdir": str(tmp_path)},
     )
 
+    assert result is not None
     report = json.loads(Path(result.path).read_text(encoding="utf-8"))
     assert report["fields"] == ["Muon_pt", "Muon_eta"]
     assert report["entry_count"] == 1000
@@ -135,6 +138,7 @@ def test_schema_snapshot_observer_keeps_non_envelope_dict_shape(tmp_path: Path) 
         ctx={"outdir": str(tmp_path)},
     )
 
+    assert result is not None
     report = json.loads(Path(result.path).read_text(encoding="utf-8"))
     assert report["fields"] == ["a", "b"]
     assert report["envelope"]["unwrapped"] is False
@@ -153,5 +157,5 @@ def test_schema_snapshot_first_partition_mode_skips_later_partitions(tmp_path: P
         },
     )
 
-    assert result.metadata["skipped"] is True
+    assert result is None
     assert not list(tmp_path.rglob("*.json"))
