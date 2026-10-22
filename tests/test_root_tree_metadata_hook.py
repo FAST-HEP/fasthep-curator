@@ -342,6 +342,9 @@ def test_root_metadata_hook_rejects_unknown_params(tmp_path: Path) -> None:
         ({"total_entries_source": 3}, TypeError),
         ({"total_entries_source": ""}, ValueError),
         ({"add_per_file": "yes"}, TypeError),
+        ({"max_files_warn": -1}, TypeError),
+        ({"max_files_warn": True}, TypeError),
+        ({"max_files_warn": "100"}, TypeError),
     ],
 )
 def test_root_metadata_hook_validates_params_before_opening_files(
@@ -356,6 +359,78 @@ def test_root_metadata_hook_validates_params_before_opening_files(
         inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets(None)), **params)
 
     assert opened == []
+
+
+def _many(n_datasets: int, files_each: int, nevents: Any = None) -> dict[str, Any]:
+    return {
+        f"ds{i}": {
+            "name": f"ds{i}",
+            "files": [f"ds{i}_{j}.root" for j in range(files_each)],
+            "nevents": nevents,
+        }
+        for i in range(n_datasets)
+    }
+
+
+def test_root_metadata_hook_warns_once_above_the_file_threshold(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch)
+
+    with pytest.warns(UserWarning, match="101 files in 2 datasets") as caught:
+        inspect_root_tree_datasets(
+            _ctx_with(tmp_path, {**_many(1, 51), "other": _many(1, 50)["ds0"]})
+        )
+
+    assert len([w for w in caught if "will be opened" in str(w.message)]) == 1
+    assert len(opened) == 101
+
+
+def test_root_metadata_hook_does_not_warn_at_the_file_threshold(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _count_opens(monkeypatch)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        inspect_root_tree_datasets(_ctx_with(tmp_path, _many(2, 50)))
+
+
+def test_root_metadata_hook_does_not_warn_when_nevents_avoids_the_reads(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        inspect_root_tree_datasets(_ctx_with(tmp_path, _many(3, 100, nevents=10)))
+
+    assert opened == []
+
+
+def test_root_metadata_hook_counts_only_the_datasets_it_reads(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _count_opens(monkeypatch)
+    datasets = {**_many(1, 500, nevents=10), "bad": _many(1, 3)["ds0"]}
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        inspect_root_tree_datasets(_ctx_with(tmp_path, datasets))
+
+
+def test_root_metadata_hook_threshold_is_a_parameter(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _count_opens(monkeypatch)
+
+    with pytest.warns(UserWarning, match="3 files in 1 datasets"):
+        inspect_root_tree_datasets(_ctx_with(tmp_path, _many(1, 3)), max_files_warn=2)
 
 
 def _ctx(tmp_path: Path) -> CompileHookContext:

@@ -20,6 +20,7 @@ def inspect_root_tree_datasets(
     *,
     total_entries_source: str | None = "nevents",
     add_per_file: bool = False,
+    max_files_warn: int = 100,
 ) -> dict[str, Any]:
     """Record entry counts for declared datasets.
 
@@ -29,7 +30,9 @@ def inspect_root_tree_datasets(
     files are opened only for datasets without a valid count, when
     ``total_entries_source`` is ``None``, or when ``add_per_file`` asks for the
     per-file entries. ``total_entries_origin`` records which source was used, and
-    ``total_entries_fallback`` why a requested key was not used.
+    ``total_entries_fallback`` why a requested key was not used. One warning is
+    issued before any file is opened when more than ``max_files_warn`` files
+    (default 100) are about to be read.
 
     The hook uses metadata-only ROOT access. It reads ``TTree.num_entries`` and
     must not materialise event arrays. Counts from the dataset key are not
@@ -37,13 +40,17 @@ def inspect_root_tree_datasets(
     inconsistent input that the hook cannot detect (unless ``add_per_file``
     reads the files anyway, which then warns on a mismatch).
     """
-    _validate_params(total_entries_source, add_per_file)
+    _validate_params(total_entries_source, add_per_file, max_files_warn)
     datasets = dict(getattr(ctx, "plan_context", {}).get("datasets") or {})
     tree_names = _root_tree_names(getattr(ctx, "normalized", {}) or {})
     if not datasets or not tree_names:
         return {"dataset_metadata": {"datasets": {}}}
 
-    out: dict[str, Any] = {"datasets": {}}
+    # Decide first which datasets need a read, so the user is warned before the
+    # (possibly slow, remote) opens start.
+    decisions: dict[str, tuple[dict[str, Any], int | None, str | None, bool]] = {}
+    files_to_read = 0
+    datasets_to_read = 0
     for dataset_name, dataset_spec in datasets.items():
         dataset = dataset_spec or {}
         declared = None
@@ -53,12 +60,28 @@ def inspect_root_tree_datasets(
             declared = _valid_entry_count(raw)
             if declared is None:
                 fallback = "missing" if raw is None else "invalid"
+        read = declared is None or add_per_file
+        if read:
+            datasets_to_read += 1
+            files_to_read += len(dataset.get("files") or [])
+        decisions[str(dataset_name)] = (dataset, declared, fallback, read)
 
+    if files_to_read > max_files_warn:
+        warnings.warn(
+            f"{files_to_read} files in {datasets_to_read} datasets will be opened to "
+            "read entry counts; each open can be slow, especially over the network. "
+            f"Set the dataset {total_entries_source or 'nevents'!r} key to skip the "
+            "reads, or raise max_files_warn to silence this warning",
+            stacklevel=2,
+        )
+
+    out: dict[str, Any] = {"datasets": {}}
+    for dataset_name, (dataset, declared, fallback, read) in decisions.items():
         files_obj: dict[str, Any] = {}
         read_total = None
-        if declared is None or add_per_file:
+        if read:
             files_obj = _inspect_dataset_files(
-                str(dataset_name), list(dataset.get("files") or []), tree_names
+                dataset_name, list(dataset.get("files") or []), tree_names
             )
             read_total = int(sum(item["entries"] for item in files_obj.values()))
 
@@ -78,12 +101,14 @@ def inspect_root_tree_datasets(
             record["total_entries_origin"] = "read"
             if fallback is not None:
                 record["total_entries_fallback"] = fallback
-        out["datasets"][str(dataset_name)] = record
+        out["datasets"][dataset_name] = record
 
     return {"dataset_metadata": out}
 
 
-def _validate_params(total_entries_source: Any, add_per_file: Any) -> None:
+def _validate_params(
+    total_entries_source: Any, add_per_file: Any, max_files_warn: Any
+) -> None:
     if total_entries_source is not None:
         if not isinstance(total_entries_source, str):
             raise TypeError(
@@ -95,6 +120,14 @@ def _validate_params(total_entries_source: Any, add_per_file: Any) -> None:
     if not isinstance(add_per_file, bool):
         raise TypeError(
             f"add_per_file must be a bool, got {type(add_per_file).__name__}"
+        )
+    if (
+        not isinstance(max_files_warn, int)
+        or isinstance(max_files_warn, bool)
+        or max_files_warn < 0
+    ):
+        raise TypeError(
+            f"max_files_warn must be a non-negative int, got {max_files_warn!r}"
         )
 
 
