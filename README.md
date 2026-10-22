@@ -188,6 +188,26 @@ from fasthep_curator.api import inspect_root_tree_schema
 schema = inspect_root_tree_schema("input.root", tree="Events")
 ```
 
+## Dataset Entry Counts (compile hook)
+
+The `dataset_metadata.root_tree` compile hook records `total_entries` per dataset in
+`dataset_metadata.json`. By default the count comes from the dataset's `nevents` key, and no file is
+opened. A dataset without a valid `nevents` (an integer, or a digit-only string, not negative) is read
+from its files instead, and `total_entries_fallback` says why.
+
+Parameters (set under `params` of the registry entry):
+
+| Parameter | Default | Effect |
+|---|---|---|
+| `total_entries_source` | `nevents` | Dataset key that holds the count. `null` reads the files of every dataset. |
+| `add_per_file` | `false` | Also record `entries` per file under `files` (opens every file). Warns when the sum differs from the declared count. |
+
+`total_entries_origin` records the key that was used, or `read`. Unknown parameter names are an error.
+
+Limitation: a count taken from `nevents` is not checked against the `files` list. A list that was trimmed
+after `nevents` was written is inconsistent input that the hook cannot detect; keep both from the same source
+(for example per-file counts from DAS), or use `add_per_file` once to compare them.
+
 ## Design principles
 
 `fasthep-curator` focuses on:
