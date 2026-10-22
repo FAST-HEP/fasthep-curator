@@ -201,6 +201,7 @@ Parameters (set under `params` of the registry entry):
 |---|---|---|
 | `total_entries_source` | `nevents` | Dataset key that holds the count. `null` reads the files of every dataset. |
 | `add_per_file` | `false` | Also record `entries` per file under `files` (opens every file). Warns when the sum differs from the declared count. |
+| `max_files_warn` | `100` | One warning, before any file is opened, when more files than this are about to be read. |
 
 `total_entries_origin` records the key that was used, or `read`. Unknown parameter names are an error.
 
