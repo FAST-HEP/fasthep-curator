@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any
 
+import pytest
 from hepflow.build_layout import BuildPaths
 from hepflow.compiler.compile_hooks import CompileHookContext
 
@@ -57,7 +59,7 @@ def test_root_metadata_hook_records_entries_and_totals(
         fake_open,
     )
 
-    result = inspect_root_tree_datasets(_ctx(tmp_path))
+    result = inspect_root_tree_datasets(_ctx(tmp_path), add_per_file=True)
 
     assert opened == ["data.root", "dy.root", "extra.root"]
     assert result == {
@@ -71,6 +73,8 @@ def test_root_metadata_hook_records_entries_and_totals(
                         }
                     },
                     "total_entries": 7,
+                    "total_entries_origin": "read",
+                    "total_entries_fallback": "missing",
                 },
                 "dy": {
                     "files": {
@@ -84,6 +88,8 @@ def test_root_metadata_hook_records_entries_and_totals(
                         },
                     },
                     "total_entries": 24,
+                    "total_entries_origin": "read",
+                    "total_entries_fallback": "missing",
                 },
             }
         }
@@ -118,7 +124,7 @@ def test_root_metadata_hook_passes_remote_paths_to_uproot(
         build_paths=BuildPaths(root=tmp_path),
     )
 
-    result = inspect_root_tree_datasets(ctx)
+    result = inspect_root_tree_datasets(ctx, add_per_file=True)
 
     assert opened == ["root://example.invalid//store/file.root"]
     assert result["dataset_metadata"]["datasets"]["DoubleMuon"]["files"][
@@ -138,9 +144,218 @@ def test_root_metadata_hook_returns_empty_artifact_without_root_sources(
         build_paths=BuildPaths(root=tmp_path),
     )
 
-    assert inspect_root_tree_datasets(ctx) == {
-        "dataset_metadata": {"datasets": {}}
+    assert inspect_root_tree_datasets(ctx) == {"dataset_metadata": {"datasets": {}}}
+
+
+def _count_opens(monkeypatch, entries: int = 5) -> list[str]:
+    opened: list[str] = []
+
+    def fake_open(path: str) -> FakeRootFile:
+        opened.append(path)
+        return FakeRootFile({"events": entries})
+
+    monkeypatch.setattr(
+        "fasthep_curator.compile_hooks.root_tree_metadata.uproot.open",
+        fake_open,
+    )
+    return opened
+
+
+def _ctx_with(tmp_path: Path, datasets: dict[str, Any]) -> CompileHookContext:
+    return CompileHookContext(
+        normalized={"sources": {"events": {"kind": "root_tree", "tree": "events"}}},
+        plan_context={"datasets": datasets},
+        build_paths=BuildPaths(root=tmp_path),
+    )
+
+
+def _datasets(nevents: Any) -> dict[str, Any]:
+    return {"ds": {"name": "ds", "files": ["a.root", "b.root"], "nevents": nevents}}
+
+
+def test_root_metadata_hook_uses_nevents_without_opening_files(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch)
+
+    result = inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets(123)))
+
+    assert opened == []
+    assert result["dataset_metadata"]["datasets"]["ds"] == {
+        "files": {},
+        "total_entries": 123,
+        "total_entries_origin": "nevents",
     }
+
+
+def test_root_metadata_hook_accepts_digit_string_nevents(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    # Flow stores ``nevents`` as a string.
+    opened = _count_opens(monkeypatch)
+
+    result = inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets("69348871")))
+
+    assert opened == []
+    assert result["dataset_metadata"]["datasets"]["ds"]["total_entries"] == 69348871
+
+
+@pytest.mark.parametrize(
+    ("nevents", "reason"),
+    [
+        (True, "invalid"),
+        (-1, "invalid"),
+        (1.5, "invalid"),
+        ("", "invalid"),
+        ("12abc", "invalid"),
+        ("-3", "invalid"),
+        (None, "missing"),
+    ],
+)
+def test_root_metadata_hook_falls_back_to_reading_invalid_nevents(
+    tmp_path: Path,
+    monkeypatch,
+    nevents: Any,
+    reason: str,
+) -> None:
+    opened = _count_opens(monkeypatch, entries=5)
+
+    result = inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets(nevents)))
+
+    assert opened == ["a.root", "b.root"]
+    assert result["dataset_metadata"]["datasets"]["ds"] == {
+        "files": {},
+        "total_entries": 10,
+        "total_entries_origin": "read",
+        "total_entries_fallback": reason,
+    }
+
+
+def test_root_metadata_hook_accepts_zero_nevents(tmp_path: Path, monkeypatch) -> None:
+    opened = _count_opens(monkeypatch)
+
+    result = inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets(0)))
+
+    assert opened == []
+    assert result["dataset_metadata"]["datasets"]["ds"]["total_entries"] == 0
+
+
+def test_root_metadata_hook_reads_only_datasets_without_valid_nevents(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch, entries=4)
+    datasets = {
+        "good": {"name": "good", "files": ["g.root"], "nevents": 99},
+        "bad": {"name": "bad", "files": ["x.root", "y.root"]},
+    }
+
+    result = inspect_root_tree_datasets(_ctx_with(tmp_path, datasets))
+
+    assert opened == ["x.root", "y.root"]
+    by_name = result["dataset_metadata"]["datasets"]
+    assert by_name["good"]["total_entries"] == 99
+    assert by_name["bad"]["total_entries"] == 8
+
+
+def test_root_metadata_hook_reads_everything_without_a_source_key(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch, entries=5)
+
+    result = inspect_root_tree_datasets(
+        _ctx_with(tmp_path, _datasets(123)), total_entries_source=None
+    )
+
+    assert opened == ["a.root", "b.root"]
+    assert result["dataset_metadata"]["datasets"]["ds"] == {
+        "files": {},
+        "total_entries": 10,
+        "total_entries_origin": "read",
+    }
+
+
+def test_root_metadata_hook_uses_the_named_source_key(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    opened = _count_opens(monkeypatch)
+    datasets = {"ds": {"name": "ds", "files": ["a.root"], "n_events": 7}}
+
+    result = inspect_root_tree_datasets(
+        _ctx_with(tmp_path, datasets), total_entries_source="n_events"
+    )
+
+    assert opened == []
+    record = result["dataset_metadata"]["datasets"]["ds"]
+    assert record["total_entries"] == 7
+    assert record["total_entries_origin"] == "n_events"
+
+
+def test_root_metadata_hook_add_per_file_fills_files_and_keeps_declared_total(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _count_opens(monkeypatch, entries=5)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = inspect_root_tree_datasets(
+            _ctx_with(tmp_path, _datasets(10)), add_per_file=True
+        )
+
+    record = result["dataset_metadata"]["datasets"]["ds"]
+    assert record["total_entries"] == 10
+    assert record["total_entries_origin"] == "nevents"
+    assert set(record["files"]) == {"a.root", "b.root"}
+
+
+def test_root_metadata_hook_add_per_file_warns_on_mismatch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _count_opens(monkeypatch, entries=5)
+
+    with pytest.warns(UserWarning, match="inconsistent"):
+        result = inspect_root_tree_datasets(
+            _ctx_with(tmp_path, _datasets(99)), add_per_file=True
+        )
+
+    # The declared total still wins; the warning is the only signal.
+    assert result["dataset_metadata"]["datasets"]["ds"]["total_entries"] == 99
+
+
+def test_root_metadata_hook_rejects_unknown_params(tmp_path: Path) -> None:
+    with pytest.raises(TypeError, match="total_entry_source"):
+        inspect_root_tree_datasets(
+            _ctx_with(tmp_path, _datasets(1)),
+            total_entry_source="nevents",  # type: ignore[call-arg]
+        )
+
+
+@pytest.mark.parametrize(
+    ("params", "error"),
+    [
+        ({"total_entries_source": 3}, TypeError),
+        ({"total_entries_source": ""}, ValueError),
+        ({"add_per_file": "yes"}, TypeError),
+    ],
+)
+def test_root_metadata_hook_validates_params_before_opening_files(
+    tmp_path: Path,
+    monkeypatch,
+    params: dict[str, Any],
+    error: type[Exception],
+) -> None:
+    opened = _count_opens(monkeypatch)
+
+    with pytest.raises(error):
+        inspect_root_tree_datasets(_ctx_with(tmp_path, _datasets(None)), **params)
+
+    assert opened == []
 
 
 def _ctx(tmp_path: Path) -> CompileHookContext:
