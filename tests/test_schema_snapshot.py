@@ -153,5 +153,5 @@ def test_schema_snapshot_first_partition_mode_skips_later_partitions(tmp_path: P
         },
     )
 
-    assert result.metadata["skipped"] is True
+    assert result is None
     assert not list(tmp_path.rglob("*.json"))
