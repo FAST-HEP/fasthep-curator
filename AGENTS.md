@@ -140,3 +140,10 @@ unless a compatibility check specifically needs another Python version.
 Mock remote files, uproot handles, and environment-dependent state for routine
 tests. Do not require network access, large external datasets, CVMFS, batch
 infrastructure, or credentials for default checks.
+
+## Documentation and Changelog
+
+User-facing changes — new features, behavior changes, bug fixes, breaking changes — must add an
+entry to `CHANGELOG.md` under `## [Unreleased]`, in the matching [Keep a
+Changelog](https://keepachangelog.com/en/1.1.0/) category (Added, Changed, Deprecated, Removed,
+Fixed, Security). This repository has no `docs/` yet.
