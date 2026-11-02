@@ -10,6 +10,8 @@ Add new entries under `## [Unreleased]`, in the category they belong to. At rele
 
 ## [Unreleased]
 
+## [2026.10.1] - 2026-10-26
+
 ### Added
 
 - A `hep.resource_usage` hook recording per-partition wall-clock time, CPU time and peak RSS.
