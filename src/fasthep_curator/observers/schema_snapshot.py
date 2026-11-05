@@ -5,13 +5,12 @@ from pathlib import Path
 from typing import Any
 
 import awkward as ak
-from hepflow.model.defaults import DEFAULT_PRIMARY_STREAM_ID
 from hepflow.model.io import OutputResult
 
 SCHEMA_SNAPSHOT_OBSERVER_SPEC = {
     "name": "hep.schema_snapshot",
     "kind": "observer",
-    "version": "1.0",
+    "version": "2.0",
     "input": {
         "name": "target",
         "kind": "any",
@@ -73,13 +72,12 @@ def run_schema_snapshot_observer(
     if mode == "first_partition" and not _is_first_partition(ctx):
         return None
 
-    inspected_target, envelope = _unwrap_for_schema(target)
-    fields = _extract_fields(inspected_target)
-    schema_info = _metadata_schema_info(inspected_target)
+    fields = _extract_fields(target)
+    schema_info = _metadata_schema_info(target)
     awkward_info = (
         schema_info
         if schema_info is not None
-        else _awkward_schema_info(inspected_target)
+        else _awkward_schema_info(target)
     )
     partition = dict(ctx.get("partition") or {})
 
@@ -87,11 +85,9 @@ def run_schema_snapshot_observer(
         "kind": "schema_snapshot",
         "node_id": node_id,
         "python_type": type(target).__name__,
-        "inspected_python_type": type(inspected_target).__name__,
         "entry_count": awkward_info["entry_count"],
         "awkward_type": awkward_info["awkward_type"],
         "fields": fields,
-        "envelope": envelope,
         "metadata": {
             "dataset_name": ctx.get("dataset_name"),
             "partition_id": partition.get("id"),
@@ -120,27 +116,8 @@ def run_schema_snapshot_observer(
         metadata={
             "node_id": node_id,
             "fields": fields,
-            "envelope": envelope,
-        },
+            },
     )
-
-
-def _unwrap_for_schema(target: Any) -> tuple[Any, dict[str, Any]]:
-    if isinstance(target, dict) and len(target) == 1:
-        stream_key = next(iter(target))
-        if stream_key == DEFAULT_PRIMARY_STREAM_ID:
-            return target[stream_key], {
-                "unwrapped": True,
-                "envelope_kind": "single_stream_mapping",
-                "stream_key": DEFAULT_PRIMARY_STREAM_ID,
-            }
-        return target[stream_key], {
-            "unwrapped": True,
-            "envelope_kind": "single_mapping",
-            "stream_key": str(stream_key),
-        }
-
-    return target, {"unwrapped": False}
 
 
 def _extract_fields(target: Any) -> list[str]:

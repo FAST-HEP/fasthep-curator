@@ -17,7 +17,7 @@ class FakeMetadataSchema:
 
 
 def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> None:
-    target = {"events": ak.Array({"Muon_Pt": [[1.0]], "NIsoMuon": [1]})}
+    target = ak.Array({"Muon_Pt": [[1.0]], "NIsoMuon": [1]})
 
     result = run_schema_snapshot_observer(
         target,
@@ -49,7 +49,9 @@ def test_schema_snapshot_observer_writes_partition_report(tmp_path: Path) -> Non
     assert "schema/schema" not in expected.as_posix()
     report = json.loads(expected.read_text(encoding="utf-8"))
     assert report["fields"] == ["Muon_Pt", "NIsoMuon"]
-    assert report["envelope"]["unwrapped"] is True
+    assert "envelope" not in report
+    assert "inspected_python_type" not in report
+    assert "envelope" not in result.metadata
     assert report["metadata"]["file"] == "dy.root"
     assert report["metadata"]["start"] == 0
     assert report["metadata"]["stop"] == 10
@@ -130,9 +132,9 @@ def test_schema_snapshot_observer_accepts_metadata_only_schema(tmp_path: Path) -
     }
 
 
-def test_schema_snapshot_observer_keeps_non_envelope_dict_shape(tmp_path: Path) -> None:
+def test_schema_snapshot_observer_does_not_unwrap_single_key_dict(tmp_path: Path) -> None:
     result = run_schema_snapshot_observer(
-        {"a": 1, "b": 2},
+        {"events": ak.Array({"x": [1]})},
         node_id="observe.dict",
         out="schema",
         ctx={"outdir": str(tmp_path)},
@@ -140,8 +142,10 @@ def test_schema_snapshot_observer_keeps_non_envelope_dict_shape(tmp_path: Path) 
 
     assert result is not None
     report = json.loads(Path(result.path).read_text(encoding="utf-8"))
-    assert report["fields"] == ["a", "b"]
-    assert report["envelope"]["unwrapped"] is False
+    assert report["python_type"] == "dict"
+    assert report["fields"] == ["events"]
+    assert "envelope" not in report
+    assert "envelope" not in result.metadata
 
 
 def test_schema_snapshot_first_partition_mode_skips_later_partitions(tmp_path: Path) -> None:
