@@ -477,3 +477,13 @@ def _schema_fixture(tmp_path: Path) -> Path:
             },
         )
     return root_path
+
+
+def test_schema_transform_specs_declare_global_scope() -> None:
+    from fasthep_curator.operations.schema_validation import (  # noqa: PLC0415
+        COMPARE_SCHEMAS_SPEC,
+        ROOT_TREE_SCHEMA_SPEC,
+    )
+
+    assert ROOT_TREE_SCHEMA_SPEC["execution"] == {"scope": "global"}
+    assert COMPARE_SCHEMAS_SPEC["execution"] == {"scope": "global"}
