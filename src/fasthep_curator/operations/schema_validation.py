@@ -23,6 +23,7 @@ ROOT_TREE_SCHEMA_SPEC = {
             "description": "Full ROOT tree schema snapshot.",
         }
     },
+    "execution": {"scope": "global"},
 }
 
 
@@ -41,6 +42,7 @@ COMPARE_SCHEMAS_SPEC = {
             "description": "Diagnostic comparison of two schema snapshots.",
         }
     },
+    "execution": {"scope": "global"},
 }
 
 
