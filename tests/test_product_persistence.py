@@ -21,7 +21,12 @@ from fasthep_curator.api import inspect_root_tree_schema
 from fasthep_curator.operations.schema_validation import run_compare_schemas
 from fasthep_curator.products.persistence import load_json_value, save_json_value
 
-IDENTITY: dict[str, Any] = {"producer_node": "stage.S", "output_name": "schema"}
+IDENTITY: dict[str, Any] = {
+    "producer_node": "stage.S",
+    "output_name": "schema",
+    "product_kind": "schema_snapshot",
+    "dataset_name": "s",
+}
 
 
 def _registry() -> Any:
@@ -121,3 +126,50 @@ def test_persist_and_restore_through_flow(tmp_path: Path) -> None:
     restored = restore_products(saved.metadata["persisted"], registry=registry)
 
     assert list(restored.products.values()) == [schema]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        {"meta": {"lumi": {2016: 36.3}}},
+        {"meta": {True: 1}},
+        {"cuts": (1, 2)},
+        {"x": float("nan")},
+        {"x": float("inf")},
+    ],
+)
+def test_what_json_would_change_is_refused(tmp_path: Path, value: Any) -> None:
+    with pytest.raises(ValueError, match=r"stage\.S"):
+        _round_trip(value, tmp_path)
+
+
+def test_the_error_names_producer_output_and_kind(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="schema_snapshot") as caught:
+        _round_trip({"x": object()}, tmp_path)
+
+    message = str(caught.value)
+    assert "stage.S" in message
+    assert "schema" in message
+    assert "schema_snapshot" in message
+
+
+def test_a_circular_value_is_refused(tmp_path: Path) -> None:
+    value: dict[str, Any] = {}
+    value["self"] = value
+
+    with pytest.raises(ValueError, match=r"stage\.S"):
+        _round_trip(value, tmp_path)
+
+
+def test_a_list_must_hold_dicts(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="list of dicts"):
+        _round_trip([1, "a"], tmp_path)
+
+
+@pytest.mark.parametrize("text", ["[1, 2]", '{"format_version": "1"}', "not json"])
+def test_a_malformed_payload_is_refused_clearly(tmp_path: Path, text: str) -> None:
+    payload = tmp_path / "product.json"
+    payload.write_text(text, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"product\.json"):
+        load_json_value(tmp_path, [payload], params={}, variant=None, locator=None)

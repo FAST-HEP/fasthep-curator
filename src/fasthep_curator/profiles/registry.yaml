@@ -50,7 +50,7 @@ registry:
             container: json
             payload_roles: [data]
             fidelity: >-
-              The schema snapshot (a dict, or a list of dicts after a merge) exactly, as plain JSON data.
+              The schema snapshot (a dict, or a list of dicts after a merge) exactly, as strict JSON; tuples, non-string keys and non-finite numbers are refused, never changed.
             save: fasthep_curator.products.persistence:save_json_value
             load: fasthep_curator.products.persistence:load_json_value
 
@@ -64,6 +64,6 @@ registry:
             container: json
             payload_roles: [data]
             fidelity: >-
-              The schema comparison (a dict, or a list of dicts after a merge) exactly, as plain JSON data.
+              The schema comparison (a dict, or a list of dicts after a merge) exactly, as strict JSON; tuples, non-string keys and non-finite numbers are refused, never changed.
             save: fasthep_curator.products.persistence:save_json_value
             load: fasthep_curator.products.persistence:load_json_value

@@ -1,8 +1,9 @@
 """Persistence callables for curator's JSON products (fasthep-flow ``persistence.md``).
 
 Schema snapshots and schema comparisons are plain data (a dict, or a list of dicts when
-partition products were merged). They are stored as one JSON payload, ``product.json``;
-anything that is not data is refused.
+partition products were merged). They are stored as one JSON payload, ``product.json``.
+Whatever JSON would change on the way (tuples, non-string keys, non-finite numbers) or
+cannot store is refused, naming the producer, output and kind.
 """
 
 from __future__ import annotations
@@ -27,16 +28,30 @@ def save_json_value(
 ) -> SaveOutcome:
     """Write a schema product (dict or list of dicts) as ``product.json`` below ``root``."""
     del params
-    kind = identity.get("product_kind", "schema product")
+    who = _who(identity)
     if not isinstance(value, dict | list):
         raise ValueError(
-            f"{kind}: a schema product is a dict or a list of dicts, not "
+            f"{who}: a schema product is a dict or a list of dicts, not "
             f"{type(value).__name__}"
         )
+    if isinstance(value, list) and not all(isinstance(item, dict) for item in value):
+        raise ValueError(
+            f"{who}: a schema product that is a list must be a list of dicts"
+        )
     try:
-        text = json.dumps({"format_version": FORMAT_VERSION, "value": value})
-    except TypeError as exc:
-        raise ValueError(f"{kind}: schema product is not plain data: {exc}") from exc
+        text = json.dumps(
+            {"format_version": FORMAT_VERSION, "value": value}, allow_nan=False
+        )
+        unchanged = json.loads(text)["value"] == value
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{who}: schema product is not plain JSON data: {exc}"
+        ) from exc
+    if not unchanged:
+        raise ValueError(
+            f"{who}: JSON would change this schema product (tuples and non-string "
+            "dict keys are refused rather than converted)"
+        )
     root.mkdir(parents=True, exist_ok=True)
     (root / PAYLOAD).write_text(text, encoding="utf-8")
     return SaveOutcome(payloads=(SavedPayload(PAYLOAD, role="data"),))
@@ -52,10 +67,25 @@ def load_json_value(
 ) -> Any:
     """Read the value back from ``product.json``."""
     del root, params, variant, locator
-    document = json.loads(Path(payloads[0]).read_text(encoding="utf-8"))
+    path = Path(payloads[0])
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{PAYLOAD} ({path}) is not valid JSON: {exc}") from exc
+    if not isinstance(document, dict) or "value" not in document:
+        raise ValueError(f"{PAYLOAD} ({path}) is not a schema product payload")
     if document.get("format_version") != FORMAT_VERSION:
         raise ValueError(
-            f"schema product format_version {document.get('format_version')!r} is not "
-            f"{FORMAT_VERSION!r}"
+            f"{PAYLOAD} ({path}) format_version {document.get('format_version')!r} is "
+            f"not {FORMAT_VERSION!r}"
         )
     return document["value"]
+
+
+def _who(identity: dict[str, Any]) -> str:
+    return (
+        f"{identity.get('product_kind', 'schema product')} "
+        f"(producer {identity.get('producer_node')!r}, "
+        f"output {identity.get('output_name')!r}, "
+        f"dataset {identity.get('dataset_name')!r})"
+    )
