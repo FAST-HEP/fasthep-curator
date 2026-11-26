@@ -43,7 +43,27 @@ registry:
     schema_snapshot:
       merge: fasthep_curator.products:merge_schema_products
       materialize: fasthep_curator.products:materialize_schema_product
+      persistence:
+        formats:
+          schema_snapshot.json:
+            version: "1"
+            container: json
+            payload_roles: [data]
+            fidelity: >-
+              The schema snapshot (a dict, or a list of dicts after a merge) exactly, as plain JSON data.
+            save: fasthep_curator.products.persistence:save_json_value
+            load: fasthep_curator.products.persistence:load_json_value
 
     schema_comparison:
       merge: fasthep_curator.products:merge_schema_comparison_products
       materialize: fasthep_curator.products:materialize_schema_comparison_product
+      persistence:
+        formats:
+          schema_comparison.json:
+            version: "1"
+            container: json
+            payload_roles: [data]
+            fidelity: >-
+              The schema comparison (a dict, or a list of dicts after a merge) exactly, as plain JSON data.
+            save: fasthep_curator.products.persistence:save_json_value
+            load: fasthep_curator.products.persistence:load_json_value

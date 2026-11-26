@@ -68,6 +68,13 @@ formatting in its metadata contracts.
 - `tests/test_flow_integration.py` and `tests/test_imports_and_profiles.py` -
   Flow/profile registration integration.
 
+Persistence: `src/fasthep_curator/products/persistence.py` holds the save and load callables
+registered under `product_handlers.schema_snapshot.persistence` and
+`product_handlers.schema_comparison.persistence` in `profiles/registry.yaml` (capabilities
+`schema_snapshot.json` and `schema_comparison.json`, version "1"; fasthep-flow
+`docs/execution/persistence.md`). A stored layout change bumps the version, with no
+migration. Tests: `tests/test_product_persistence.py`.
+
 `pixi.toml` defines a `docs` task for future Sphinx documentation, but this
 repository currently has no `docs/` source tree.
 
