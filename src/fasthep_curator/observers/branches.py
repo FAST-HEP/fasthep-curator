@@ -73,8 +73,8 @@ def run_branches_observer(
     return OutputResult(
         kind="report",
         path=str(output_path),
-        format=format,
         metadata={
+            "format": format,
             "fields": fields,
             "n_fields": len(fields),
         },
