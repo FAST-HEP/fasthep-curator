@@ -68,6 +68,18 @@ formatting in its metadata contracts.
 - `tests/test_flow_integration.py` and `tests/test_imports_and_profiles.py` -
   Flow/profile registration integration.
 
+Persistence: `src/fasthep_curator/products/persistence.py` holds the save and load callables
+registered under `product_handlers.schema_snapshot.persistence` and
+`product_handlers.schema_comparison.persistence` in `profiles/registry.yaml` (capabilities
+`schema_snapshot.json` and `schema_comparison.json`, version "1"; fasthep-flow
+`docs/execution/persistence.md`). A stored layout change bumps the version, with no
+migration. Tests: `tests/test_product_persistence.py`. Limits: values JSON would change
+(tuples, non-string keys such as an int key in a dataset `meta`, NaN or inf) are refused, and
+Flow persists only partition-boundary products: a schema transform that is a global side
+product (no source, or run once and seeded into every partition) is listed as `not persisted:
+global side product`, and the `hep.schema_snapshot` observer (kind `report`) does not use
+these capabilities.
+
 `pixi.toml` defines a `docs` task for future Sphinx documentation, but this
 repository currently has no `docs/` source tree.
 
