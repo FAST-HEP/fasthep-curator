@@ -112,8 +112,8 @@ def run_schema_snapshot_observer(
     return OutputResult(
         kind="report",
         path=str(output_path),
-        format="json",
         metadata={
+            "format": "json",
             "node_id": node_id,
             "fields": fields,
             },
